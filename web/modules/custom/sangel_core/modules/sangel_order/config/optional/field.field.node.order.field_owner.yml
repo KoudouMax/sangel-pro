@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_owner
+    - node.type.order
+  module:
+    - user
+id: node.order.field_owner
+field_name: field_owner
+entity_type: node
+bundle: order
+label: Owner
+description: ''
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: default
+  handler_settings: {  }
+field_type: entity_reference

@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_state
+    - node.type.order
+  module:
+    - options
+id: node.order.field_state
+field_name: field_state
+entity_type: node
+bundle: order
+label: State
+description: ''
+required: true
+translatable: false
+default_value:
+  -
+    value: draft
+default_value_callback: ''
+settings: {  }
+field_type: list_string

@@ -1,0 +1,11 @@
+name: "Sangel Product"
+type: module
+description: "Provides the Product content type and related fields."
+core_version_requirement: ^10 || ^11
+package: Sangel
+dependencies:
+  - drupal:node
+  - drupal:taxonomy
+  - drupal:text
+  - sangel_client:sangel_client
+  - sangel_core:sangel_core

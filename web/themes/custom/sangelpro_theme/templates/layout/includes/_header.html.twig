@@ -1,0 +1,25 @@
+{#
+  Shared primary header for SangelPro layouts.
+  Expects the global `page` variable for regions and relies on the utility
+  actions include to render account shortcuts.
+#}
+<header class="sangelpro-header sticky top-0 z-30 bg-white/95 backdrop-blur shadow-sm">
+  <div class="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 lg:flex-row lg:items-center lg:gap-10">
+    <div class="flex items-center gap-6 sangelpro-header__brand">
+      {% if page.utility_brand %}
+        <div class="flex items-center gap-3 text-3xl font-bold text-sangel-primary">
+          {{ page.utility_brand }}
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="flex flex-1 flex-col gap-4 lg:flex-row lg:items-center sangelpro-header__menu">
+      {% if page.utility_search %}
+        <div class="flex-1">
+          {{ page.utility_search }}
+        </div>
+      {% endif %}
+      {{ include('@sangelpro_theme/layout/includes/_utility_actions.html.twig') }}
+    </div>
+  </div>
+</header>

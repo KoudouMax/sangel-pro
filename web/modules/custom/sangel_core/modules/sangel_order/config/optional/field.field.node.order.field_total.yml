@@ -1,0 +1,20 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_total
+    - node.type.order
+id: node.order.field_total
+field_name: field_total
+entity_type: node
+bundle: order
+label: Total
+description: ''
+required: true
+translatable: false
+default_value:
+  -
+    value: '0.00'
+default_value_callback: ''
+settings: {  }
+field_type: decimal

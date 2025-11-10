@@ -1,0 +1,17 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - taxonomy.vocabulary.client_type
+id: 6
+vid: client_type
+name: General
+description:
+  value: ""
+  format: null
+weight: 0
+parent: {}
+default_langcode: true
+path:
+  alias: ""
+  langcode: en

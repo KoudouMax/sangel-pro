@@ -1,0 +1,29 @@
+name: "Sangel Pro Theme"
+type: theme
+description: "Advanced Tailwind CSS based theme for SangelPro storefront experience."
+package: Custom
+core_version_requirement: ^10 || ^11
+base theme: stable9
+libraries:
+  - sangelpro_theme/global-styling
+  - sangelpro_theme/global-scripts
+autoload:
+  psr-4:
+    Drupal\sangelpro_theme\: src/
+
+regions:
+  utility_brand: "Utility brand"
+  utility_search: "Utility search"
+  utility_actions: "Utility actions"
+  hero: "Hero banner"
+  category_nav: "Category navigation"
+  breadcrumb: "Breadcrumb"
+  page_title: "Page title"
+  pre_content: "Pre-content highlight"
+  filters: "Filters"
+  content: "Main content"
+  sidebar: "Sidebar"
+  selection_panel: "Selection panel"
+  footer_primary: "Footer primary"
+  footer_secondary: "Footer secondary"
+  page_bottom: "Page bottom"

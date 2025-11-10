@@ -1,0 +1,3 @@
+access kint dumps:
+  title: 'View kint output'
+  restrict access: TRUE

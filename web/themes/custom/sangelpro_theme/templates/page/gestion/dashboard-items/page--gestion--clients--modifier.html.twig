@@ -1,0 +1,59 @@
+{% set summary = gestion_client_summary ?? {} %}
+
+{% embed '@sangelpro_theme/layout/page--gestion.html.twig' with { show_back_link: true, title: 'Modifier les informations du client : @client.'|t({'@client': summary.label}) }  %}
+
+
+	{% block content %}
+		<div class="space-y-6">
+			<div class="rounded-2xl border border-sangel-ice bg-white p-6 shadow-sm">
+				<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+					<div>
+						<h2 class="text-xl font-semibold text-sangel-text">{{ summary.label ?? '' }}</h2>
+						{% if summary.company %}
+							<p class="text-sm text-sangel-text/70">{{ summary.company }}</p>
+						{% endif %}
+					</div>
+					{% if summary.status_label is defined %}
+						<span class="inline-flex items-center rounded-full px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.22em] {{ summary.status == 'published' ? 'bg-sangel-primary/10 text-sangel-primary border border-sangel-primary/10' : 'bg-sangel-ice text-sangel-text/50' }}">{{ summary.status_label }}</span>
+					{% endif %}
+				</div>
+				<dl class="mt-4 grid gap-4 text-sm text-sangel-text/70 sm:grid-cols-2">
+					{% if summary.owner_name %}
+						<div>
+							<dt class="font-semibold text-sangel-text/80">{{ 'Contact'|t }}</dt>
+							<dd>
+								<div>{{ summary.owner_name }}</div>
+								{% if summary.owner_mail %}
+									<div class="text-xs text-sangel-text/60">{{ summary.owner_mail }}</div>
+								{% endif %}
+							</dd>
+						</div>
+					{% endif %}
+					{% if summary.email %}
+						<div>
+							<dt class="font-semibold text-sangel-text/80">{{ 'Email client'|t }}</dt>
+							<dd class="text-xs text-sangel-text/60">{{ summary.email }}</dd>
+						</div>
+					{% endif %}
+					{% if summary.phone %}
+						<div>
+							<dt class="font-semibold text-sangel-text/80">{{ 'Téléphone'|t }}</dt>
+							<dd class="text-xs text-sangel-text/60">{{ summary.phone }}</dd>
+						</div>
+					{% endif %}
+					{% if summary.owner_last_access %}
+						<div>
+							<dt class="font-semibold text-sangel-text/80">{{ 'Dernière connexion'|t }}</dt>
+							<dd class="text-xs text-sangel-text/60">{{ summary.owner_last_access }}</dd>
+						</div>
+					{% endif %}
+				</dl>
+			</div>
+			<div class="rounded-2xl border border-sangel-ice bg-white p-6 shadow-sm">
+				{{ drupal_entity_form('node', client_node.id) }}
+			</div>
+			{{ page.content }}
+		</div>
+	{% endblock %}
+
+{% endembed %}

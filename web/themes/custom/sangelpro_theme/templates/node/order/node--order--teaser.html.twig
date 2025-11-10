@@ -1,0 +1,191 @@
+{#
+/**
+ * @file
+ * Theme override to display an order node in teaser view mode.
+ */
+#}
+
+{% set order_number = label|render %}
+{% if order_number is empty %}
+	{% set order_number = node.label() %}
+{% endif %}
+
+{% set created_timestamp = node.getCreatedTime() %}
+{% set created_date = created_timestamp ? created_timestamp|date('d/m/Y') : '' %}
+{% set created_time = created_timestamp ? created_timestamp|date('H\\hi') : '' %}
+
+{% set state_value = node.field_state.value ?? 'draft' %}
+{% set state_labels = {
+  'draft': 'Brouillon'|t,
+  'submitted': 'Soumise'|t,
+  'processed': 'Traitee'|t,
+} %}
+{% set state_styles = {
+  'draft': {
+    'badge': 'bg-sangel-ice text-sangel-text/70',
+    'accent': 'from-sangel-ice/40 to-transparent',
+  },
+  'submitted': {
+    'badge': 'bg-amber-100 text-amber-800',
+    'accent': 'from-amber-200/60 to-transparent',
+  },
+  'processed': {
+    'badge': 'bg-sangel-primary/15 text-sangel-primary',
+    'accent': 'from-sangel-primary/20 to-transparent',
+  },
+} %}
+{% set state_label = state_labels[state_value]|default(state_value|capitalize) %}
+{% set state_style = state_styles[state_value]|default({
+  'badge': 'bg-sangel-ice text-sangel-text/70',
+  'accent': 'from-sangel-ice/40 to-transparent',
+}) %}
+
+{% set total_value = node.field_total.value is not empty ? (node.field_total.value + 0) : 0 %}
+{% set formatted_total = total_value|number_format(0, ',', ' ') %}
+
+{% set status_steps = [
+  { 'id': 'draft', 'label': 'Brouillon'|t },
+  { 'id': 'submitted', 'label': 'Soumise'|t },
+  { 'id': 'processed', 'label': 'Traitee'|t },
+] %}
+{% set active_step_index = 0 %}
+{% for step in status_steps %}
+  {% if step.id == state_value %}
+    {% set active_step_index = loop.index0 %}
+  {% endif %}
+{% endfor %}
+
+{% set wrapper_classes = [
+  'group',
+  'relative',
+  'overflow-hidden',
+  'rounded-3xl',
+  'border',
+  'border-sangel-ice-strong',
+  'bg-white',
+  'px-4',
+  'py-4',
+  'shadow-sm',
+  'transition',
+  'hover:-translate-y-[1px]',
+  'hover:border-sangel-primary/40',
+  'hover:shadow-lg',
+  'focus-within:border-sangel-primary/60',
+] %}
+
+{% set badge_classes = [
+  'inline-flex',
+  'items-center',
+  'gap-2',
+  'rounded-full',
+  'px-2.5',
+  'py-[0.35rem]',
+  'text-[0.65rem]',
+  'font-semibold',
+  'uppercase',
+  'tracking-[0.18em]',
+  state_style.badge,
+] %}
+
+<article{{ attributes.addClass(wrapper_classes) }}>
+  <div class="pointer-events-none absolute inset-0 bg-gradient-to-br {{ state_style.accent }} opacity-0 transition duration-500 group-hover:opacity-100" aria-hidden="true"></div>
+
+  <div class="relative flex flex-col gap-4">
+    <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div class="space-y-3">
+        <div class="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase text-sangel-text/50">
+          <span class="tracking-[0.22em]">{{ 'Commande'|t }}</span>
+          <span class="{{ badge_classes|join(' ') }}">{{ state_label }}</span>
+        </div>
+        <h3 class="text-[1.35rem] font-semibold text-sangel-text">
+          <a href="{{ url }}" class="inline-flex items-center gap-2 transition hover:text-sangel-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sangel-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white">
+            <span>{{ 'N° @number'|t({'@number': order_number}) }}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-sangel-primary/70" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M3 10a.75.75 0 0 1 .75-.75h10.69l-3.22-3.22a.75.75 0 0 1 1.06-1.06l4.5 4.5a.75.75 0 0 1 0 1.06l-4.5 4.5a.75.75 0 0 1-1.06-1.06l3.22-3.22H3.75A.75.75 0 0 1 3 10Z" clip-rule="evenodd" />
+            </svg>
+          </a>
+        </h3>
+        <dl class="flex flex-wrap gap-x-8 gap-y-4 text-sm text-sangel-text/70">
+          <div class="flex flex-col gap-1">
+            <dt class="text-xs font-semibold uppercase tracking-[0.16em] text-sangel-text/45">{{ 'Identifiant'|t }}</dt>
+            <dd class="font-semibold text-sangel-text">{{ node.id() }}</dd>
+          </div>
+          {% if created_date %}
+            <div class="flex flex-col gap-1">
+              <dt class="text-xs font-semibold uppercase tracking-[0.16em] text-sangel-text/45">{{ 'Cree le'|t }}</dt>
+              <dd class="font-semibold text-sangel-text">{{ created_date }} · {{ created_time }}</dd>
+            </div>
+          {% endif %}
+          <div class="flex flex-col gap-1">
+            <dt class="text-xs font-semibold uppercase tracking-[0.16em] text-sangel-text/45">{{ 'Montant total'|t }}</dt>
+            <dd class="text-lg font-semibold text-sangel-primary">{{ formatted_total }}&nbsp;F&nbsp;CFA</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="flex flex-col items-stretch gap-3 sm:items-end">
+        <a href="{{ url }}" class="inline-flex items-center justify-center gap-2 rounded-full bg-sangel-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sangel-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sangel-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white">
+          <span>{{ 'Voir la commande'|t }}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M3 10a.75.75 0 0 1 .75-.75h10.69l-3.22-3.22a.75.75 0 0 1 1.06-1.06l4.5 4.5a.75.75 0 0 1 0 1.06l-4.5 4.5a.75.75 0 0 1-1.06-1.06l3.22-3.22H3.75A.75.75 0 0 1 3 10Z" clip-rule="evenodd" />
+          </svg>
+        </a>
+        {% if content.links %}
+          <div class="text-xs font-semibold uppercase tracking-[0.18em] text-sangel-text/40">{{ 'Actions'|t }}</div>
+          <div class="flex flex-col items-end gap-2 text-sm text-sangel-primary/80">
+            {{ content.links }}
+          </div>
+        {% else %}
+          <span class="text-xs font-semibold uppercase tracking-[0.18em] text-sangel-text/40">{{ 'Resume'|t }}</span>
+        {% endif %}
+      </div>
+    </header>
+
+    <section class="space-y-2.5">
+      <div class="flex items-center gap-3 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-sangel-text/45">
+        <span>{{ 'Etat d avance'|t }}</span>
+        <span aria-hidden="true" class="h-px flex-1 bg-sangel-ice/70"></span>
+      </div>
+      <div class="flex flex-col gap-3">
+        <div class="flex items-center gap-3">
+          {% for step in status_steps %}
+            {% set is_done = loop.index0 < active_step_index %}
+            {% set is_active = loop.index0 == active_step_index %}
+            {% set indicator_classes = [
+              'flex',
+              'h-7',
+              'w-7',
+              'items-center',
+              'justify-center',
+              'rounded-full',
+              'border',
+              'border-sangel-ice-strong',
+              'bg-white',
+              'text-xs',
+              'font-semibold',
+              is_done or is_active ? 'border-sangel-primary/60 text-sangel-primary' : 'text-sangel-text/40',
+              is_active ? 'shadow-md' : '',
+            ] %}
+            <div class="flex items-center gap-3">
+              <span class="{{ indicator_classes|join(' ') }}">
+                {% if is_done %}
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M16.704 5.292a1 1 0 0 1 .004 1.414l-7.25 7.304a1 1 0 0 1-1.43.015l-3.25-3.25a1 1 0 1 1 1.414-1.414l2.536 2.536 6.536-6.583a1 1 0 0 1 1.44-.022Z" clip-rule="evenodd" />
+                  </svg>
+                {% else %}
+                  {{ loop.index }}
+                {% endif %}
+              </span>
+              <span class="text-[0.6rem] font-semibold uppercase tracking-[0.18em] {{ loop.index0 <= active_step_index ? 'text-sangel-primary' : 'text-sangel-text/45' }}">
+                {{ step.label }}
+              </span>
+            </div>
+            {% if not loop.last %}
+              <span aria-hidden="true" class="flex-1 border-t border-dashed border-sangel-ice"></span>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  </div>
+</article>

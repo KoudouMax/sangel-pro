@@ -1,0 +1,25 @@
+{#
+/**
+ * @file
+ * Custom unformatted view template for the order items listing.
+ */
+#}
+{% set list_classes = [
+  'space-y-4',
+  'list-none',
+  'print:list-decimal',
+  'print:pl-6',
+  'print:space-y-3',
+] %}
+{% set row_classes = default_row_class ? ['views-row'] : [] %}
+{% set row_classes = row_classes|merge([
+  'print:list-item',
+]) %}
+
+<ol class="{{ list_classes|join(' ') }}" role="list">
+  {% for row in rows %}
+    <li{{ row.attributes.addClass(row_classes) }}>
+      {{ row.content }}
+    </li>
+  {% endfor %}
+</ol>

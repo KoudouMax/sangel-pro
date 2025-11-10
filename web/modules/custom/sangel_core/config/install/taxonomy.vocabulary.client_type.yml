@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies: {  }
+name: 'Client type'
+vid: client_type
+description: 'Defines catalog segments for different enterprise types.'
+hierarchy: 0
+weight: 0
+translatable: false
+default_langcode: true

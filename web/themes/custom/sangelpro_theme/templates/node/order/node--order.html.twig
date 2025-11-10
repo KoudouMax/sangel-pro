@@ -1,0 +1,329 @@
+{#
+/**
+ * @file
+ * Theme override to display a node.
+ *
+ * Available variables:
+ * - node: The node entity with limited access to object properties and methods.
+ *   Only method names starting with "get", "has", or "is" and a few common
+ *   methods such as "id", "label", and "bundle" are available. For example:
+ *   - node.getCreatedTime() will return the node creation timestamp.
+ *   - node.hasField('field_example') returns TRUE if the node bundle includes
+ *     field_example. (This does not indicate the presence of a value in this
+ *     field.)
+ *   - node.isPublished() will return whether the node is published or not.
+ *   Calling other methods, such as node.delete(), will result in an exception.
+ *   See \Drupal\node\Entity\Node for a full list of public properties and
+ *   methods for the node object.
+ * - label: (optional) The title of the node.
+ * - content: All node items. Use {{ content }} to print them all,
+ *   or print a subset such as {{ content.field_example }}. Use
+ *   {{ content|without('field_example') }} to temporarily suppress the printing
+ *   of a given child element.
+ * - author_picture: The node author user entity, rendered using the "compact"
+ *   view mode.
+ * - metadata: Metadata for this node.
+ * - date: (optional) Themed creation date field.
+ * - author_name: (optional) Themed author name field.
+ * - url: Direct URL of the current node.
+ * - display_submitted: Whether submission information should be displayed.
+ * - attributes: HTML attributes for the containing element.
+ *   The attributes.class element may contain one or more of the following
+ *   classes:
+ *   - node: The current template type (also known as a "theming hook").
+ *   - node--type-[type]: The current node type. For example, if the node is an
+ *     "Article" it would result in "node--type-article". Note that the machine
+ *     name will often be in a short form of the human readable label.
+ *   - node--view-mode-[view_mode]: The View Mode of the node; for example, a
+ *     teaser would result in: "node--view-mode-teaser", and
+ *     full: "node--view-mode-full".
+ *   The following are controlled through the node publishing options.
+ *   - node--promoted: Appears on nodes promoted to the front page.
+ *   - node--sticky: Appears on nodes ordered above other non-sticky nodes in
+ *     teaser listings.
+ *   - node--unpublished: Appears on unpublished nodes visible only to site
+ *     admins.
+ * - title_attributes: Same as attributes, except applied to the main title
+ *   tag that appears in the template.
+ * - content_attributes: Same as attributes, except applied to the main
+ *   content tag that appears in the template.
+ * - author_attributes: Same as attributes, except applied to the author of
+ *   the node tag that appears in the template.
+ * - title_prefix: Additional output populated by modules, intended to be
+ *   displayed in front of the main title tag that appears in the template.
+ * - title_suffix: Additional output populated by modules, intended to be
+ *   displayed after the main title tag that appears in the template.
+ * - view_mode: View mode; for example, "teaser" or "full".
+ * - teaser: Flag for the teaser state. Will be true if view_mode is 'teaser'.
+ * - page: Flag for the full page state. Will be true if view_mode is 'full'.
+ *
+ * @see template_preprocess_node()
+ *
+ */
+#}
+{% set order_number = label is defined ? label|render : '' %}
+{% if order_number is empty %}
+	{% set order_number = node.label() %}
+{% endif %}
+{% set state_value = node.field_state.value %}
+{% set total_value = node.field_total.value is not empty ? (node.field_total.value + 0) : 0 %}
+{% set formatted_total_price = total_value|number_format(0, ',', ' ') %}
+{% set created_timestamp = node.getCreatedTime() %}
+{% set created_date = created_timestamp ? created_timestamp|date('d/m/Y') : '' %}
+{% set created_time = created_timestamp ? created_timestamp|date('H\\hi') : '' %}
+{% set updated_timestamp = node.getChangedTime() %}
+{% set updated_date = updated_timestamp and updated_timestamp != created_timestamp ? updated_timestamp|date('d/m/Y à H\\hi') : '' %}
+
+{% set state_configs = {
+  'draft': {
+    'label': 'Brouillon'|t,
+    'badge': 'bg-sangel-ice text-sangel-text/70',
+    'hint': 'Votre commande est en préparation et peut encore être ajustée.'|t,
+  },
+  'submitted': {
+    'label': 'Soumise'|t,
+    'badge': 'bg-amber-100 text-amber-800',
+    'hint': 'Votre commande a été transmise et sera traitée sous peu.'|t,
+  },
+  'processed': {
+    'label': 'Traitée'|t,
+    'badge': 'bg-sangel-primary/10 text-sangel-primary',
+    'hint': 'La commande est finalisée et prête pour la prochaine étape.'|t,
+  },
+} %}
+{% set state_config_default = {
+  'label': state_value ? state_value|capitalize : '—',
+  'badge': 'bg-sangel-ice text-sangel-text/70',
+  'hint': 'Statut en cours de synchronisation.'|t,
+} %}
+{% set state_config = state_configs[state_value]|default(state_config_default) %}
+
+{% set details = content|without('field_total', 'field_state', 'links') %}
+{% set details_markup = details|render %}
+{% set can_manage_order_status = can_manage_order_status|default(false) %}
+{% set can_view_client_history = can_view_client_history|default(false) %}
+{% set order_status_form = order_status_form|default(null) %}
+{% set order_owner_id = order_owner_id|default(node.getOwnerId()) %}
+{% set nid = node.id() %}
+{% set status_steps = [
+  {
+    'id': 'draft',
+    'label': 'Brouillon'|t,
+    'description': 'Commande enregistrée, en attente de validation.'|t,
+  },
+  {
+    'id': 'submitted',
+    'label': 'Soumise'|t,
+    'description': 'Commande transmise à l’équipe commerciale.'|t,
+  },
+  {
+    'id': 'processed',
+    'label': 'Traitée'|t,
+    'description': 'Commande préparée et prête pour la prochaine étape.'|t,
+  },
+] %}
+{% set active_step_index = 0 %}
+{% for step in status_steps %}
+	{% if step.id == state_value %}
+		{% set active_step_index = loop.index0 %}
+	{% endif %}
+{% endfor %}
+
+<article{{attributes.addClass('space-y-8','print:space-y-6')}}>
+
+	{{ title_prefix }}
+	{% if page and order_number %}
+		<header class="rounded-3xl border border-sangel-ice-strong bg-white px-6 py-8 shadow-sm print:border-sangel-ice-strong print:shadow-none print:px-0 print:py-0">
+			<div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+				<div class="space-y-4">
+					<div class="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase text-sangel-text/50">
+						<span class="tracking-[0.24em]">{{ 'Commande'|t }}</span>
+						<span class="inline-flex items-center rounded-full px-3 py-1 text-[0.65rem] tracking-[0.22em] {{ state_config.badge }}">
+							{{ state_config.label }}
+						</span>
+					</div>
+					<h1 class="text-3xl font-bold tracking-tight text-sangel-primary sm:text-4xl">
+						{{ 'N° @number'|t({'@number': order_number}) }}
+					</h1>
+					<div class="flex flex-wrap items-center gap-3 text-sm text-sangel-text/60">
+						{% if created_date %}
+							<span>{{ 'Créée le @date à @time'|t({'@date': created_date, '@time': created_time}) }}</span>
+						{% endif %}
+						{% if updated_date %}
+							<span>{{ 'Dernière mise à jour : @date'|t({'@date': updated_date}) }}</span>
+						{% endif %}
+					</div>
+					{% if state_config.hint %}
+						<p class="text-sm text-sangel-text/60">{{ state_config.hint }}</p>
+					{% endif %}
+				</div>
+				<div class="flex flex-col items-end gap-4 text-right print:items-start print:text-left">
+					<div class="rounded-2xl border border-sangel-primary/20 bg-sangel-primary/5 px-6 py-4 text-right print:border-sangel-ice-strong print:bg-white print:text-left">
+						<span class="text-xs font-semibold uppercase tracking-[0.24em] text-sangel-text/60">{{ 'Montant total'|t }}</span>
+						<p class="text-3xl font-semibold text-sangel-primary sm:text-4xl">
+							{{ formatted_total_price }}&nbsp;F&nbsp;CFA
+						</p>
+						<span class="text-xs text-sangel-text/50">{{ 'Montant indicatif toutes taxes comprises.'|t }}</span>
+					</div>
+					<div class="flex flex-wrap justify-end gap-3 text-xs text-sangel-text/50 print:hidden">
+						<span class="inline-flex items-center gap-1 rounded-full bg-sangel-ice px-3 py-1 font-semibold uppercase tracking-[0.18em] text-sangel-text/70">
+							{{ 'Identifiant : @id'|t({'@id': node.id()}) }}
+						</span>
+					</div>
+				</div>
+			</div>
+		</header>
+	{% elseif label and not page %}
+		<h2{{title_attributes.addClass('text-xl','font-semibold','text-sangel-text')}}>
+			<a href="{{ url }}" rel="bookmark" class="hover:text-sangel-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sangel-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white">
+				{{ order_number }}
+			</a>
+		</h2>
+	{% endif %}
+	{{ title_suffix }}
+
+	<div class="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,0.95fr)] print:grid-cols-1">
+		<section class="space-y-6">
+			{% if details_markup|trim %}
+				<section class="rounded-3xl border border-sangel-ice-strong bg-white/95 p-6 shadow-sm print:border-sangel-ice-strong print:bg-white">
+					<h2 class="text-sm font-semibold uppercase text-sangel-text/50" style="letter-spacing: 0.22em;">{{ 'Détails de la commande'|t }}</h2>
+					<div class="mt-4 space-y-6 text-sangel-text">
+						{{ details_markup }}
+					</div>
+				</section>
+			{% endif %}
+
+			<section aria-labelledby="order-items-title" class="rounded-3xl border border-sangel-ice-strong bg-white/95 p-6 shadow-sm print:border-sangel-ice-strong print:bg-white">
+				<div class="flex flex-wrap items-end justify-between gap-3">
+					<h2 id="order-items-title" class="text-lg font-semibold text-sangel-text">{{ 'Articles de la commande'|t }}</h2>
+					<span class="text-xs uppercase text-sangel-text/50" style="letter-spacing: 0.22em;">{{ 'Détail des postes'|t }}</span>
+				</div>
+				<div class="mt-4 space-y-4">
+
+					{% if is_client %}
+						{{ drupal_view('order', 'user_order_items') }}
+					{% endif %}
+
+					{% if is_commercial %}
+						{{ drupal_view('order', 'user_order_items', order_owner_id, node.id()) }}
+					{% endif %}
+
+
+				</div>
+			</section>
+
+		</section>
+
+		<aside class="space-y-6 print:space-y-4">
+			<section class="rounded-3xl border border-sangel-ice-strong bg-white/95 p-6 shadow-sm print:border-sangel-ice-strong print:bg-white">
+				<h2 class="text-sm font-semibold uppercase text-sangel-text/50" style="letter-spacing: 0.22em;">{{ 'Résumé exécutif'|t }}</h2>
+				<dl class="mt-5 space-y-4 text-sm text-sangel-text">
+					<div class="flex items-center justify-between gap-3">
+						<dt class="text-sangel-text/60">{{ 'Numéro de commande'|t }}</dt>
+						<dd class="font-semibold text-sangel-text">{{ order_number }}</dd>
+					</div>
+					<div class="flex items-center justify-between gap-3">
+						<dt class="text-sangel-text/60">{{ 'Statut actuel'|t }}</dt>
+						<dd class="inline-flex items-center gap-2">
+							<span class="inline-flex items-center rounded-full px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.22em] {{ state_config.badge }}">
+								{{ state_config.label }}
+							</span>
+						</dd>
+					</div>
+					{% if created_date %}
+						<div class="flex items-center justify-between gap-3">
+							<dt class="text-sangel-text/60">{{ 'Créée le'|t }}</dt>
+							<dd class="font-medium text-sangel-text">{{ created_date }}
+								<span class="text-sangel-text/50">{{ created_time }}</span>
+							</dd>
+						</div>
+					{% endif %}
+					{% if updated_date %}
+						<div class="flex items-center justify-between gap-3">
+							<dt class="text-sangel-text/60">{{ 'Mise à jour'|t }}</dt>
+							<dd class="font-medium text-sangel-text">{{ updated_date }}</dd>
+						</div>
+					{% endif %}
+					<div class="flex items-center justify-between gap-3">
+						<dt class="text-sangel-text/60">{{ 'Montant total'|t }}</dt>
+						<dd class="font-semibold text-sangel-primary">{{ formatted_total_price }}&nbsp;F&nbsp;CFA</dd>
+					</div>
+				</dl>
+			</section>
+
+			<section class="rounded-3xl border border-sangel-ice-strong bg-white/95 p-6 shadow-sm print:border-sangel-ice-strong print:bg-white">
+				<h2 class="text-sm font-semibold uppercase text-sangel-text/50" style="letter-spacing: 0.22em;">{{ 'Suivi du traitement'|t }}</h2>
+				<ol class="mt-6 space-y-4">
+					{% for step in status_steps %}
+						{% set is_completed = loop.index0 < active_step_index %}
+						{% set is_current = loop.index0 == active_step_index %}
+						{% set step_classes = [
+              'inline-flex',
+              'h-6',
+              'w-6',
+              'items-center',
+              'justify-center',
+              'rounded-full',
+              'border',
+              is_completed ? 'bg-sangel-primary text-white border-sangel-primary' : (is_current ? 'bg-sangel-primary/10 text-sangel-primary border-sangel-primary' : 'bg-sangel-ice text-sangel-text/50 border-sangel-ice-strong')
+            ] %}
+						<li class="flex items-start gap-3">
+							<span class="{{ step_classes|join(' ') }}">
+								{% if is_completed %}
+									<svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+										<path fill-rule="evenodd" d="M16.704 5.29a1 1 0 0 1 .006 1.414l-6.667 6.75a1 1 0 0 1-1.432.006l-3.333-3.25a1 1 0 1 1 1.394-1.434l2.61 2.547 5.973-6.054a1 1 0 0 1 1.449.02Z" clip-rule="evenodd"/>
+									</svg>
+								{% elseif is_current %}
+									<span class="h-2 w-2 rounded-full bg-current"></span>
+								{% else %}
+									<span class="text-[0.625rem] font-semibold">{{ loop.index }}</span>
+								{% endif %}
+							</span>
+							<div class="flex flex-1 flex-col gap-1">
+								<span class="text-sm font-semibold text-sangel-text">{{ step.label }}</span>
+								<span class="text-xs text-sangel-text/60">{{ step.description }}</span>
+								{% if is_current and state_config.hint %}
+									<span class="text-xs font-medium text-sangel-primary">{{ state_config.hint }}</span>
+								{% endif %}
+							</div>
+						</li>
+					{% endfor %}
+				</ol>
+			</section>
+
+			{% if can_manage_order_status and order_status_form %}
+				<section class="rounded-3xl border border-sangel-ice-strong bg-white/95 p-6 shadow-sm print:border-sangel-ice-strong print:bg-white">
+					<div class="flex flex-col gap-3 border-b border-sangel-ice/60 pb-4">
+						<h2 class="text-lg font-semibold text-sangel-text">{{ 'Mettre à jour le statut'|t }}</h2>
+						<p class="text-sm text-sangel-text/60">
+							{{ 'Ajustez l’état de la commande pour informer le client et suivre l’avancement de votre traitement.'|t }}
+						</p>
+					</div>
+					<div class="mt-5">
+						{{ order_status_form }}
+					</div>
+				</section>
+			{% endif %}
+
+			{% if display_submitted %}
+				<section class="rounded-3xl border border-sangel-ice-strong bg-white/95 p-6 shadow-sm print:border-sangel-ice-strong print:bg-white">
+					<h2 class="text-sm font-semibold uppercase text-sangel-text/50" style="letter-spacing: 0.22em;">{{ 'Suivi de soumission'|t }}</h2>
+					<div class="mt-4 flex flex-col gap-4 text-sm text-sangel-text/70">
+						<div class="flex items-center gap-4">
+							{{ author_picture }}
+							<div{{author_attributes.addClass('space-y-1')}}>
+								<p>
+									{% trans %}Submitted by
+									{{ author_name }}
+									on
+									{{ date }}{% endtrans %}
+								</p>
+								{{ metadata }}
+							</div>
+						</div>
+					</div>
+				</section>
+			{% endif %}
+		</aside>
+	</div>
+</article>

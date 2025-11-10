@@ -1,0 +1,64 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @file
+ * Install, update and uninstall hooks for the Sangel Catalog module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function sangel_catalog_schema(): array {
+  $schema = [];
+
+  $schema['sangel_catalog_product'] = [
+    'description' => 'Maps catalog nodes to their product node selections.',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+      ],
+      'catalog_nid' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Referenced catalog node ID.',
+      ],
+      'product_nid' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Referenced product node ID.',
+      ],
+      'weight' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Ordering weight for the product within the catalog.',
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'catalog_product' => ['catalog_nid', 'product_nid'],
+    ],
+    'indexes' => [
+      'catalog_nid' => ['catalog_nid'],
+      'product_nid' => ['product_nid'],
+    ],
+  ];
+
+  return $schema;
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function sangel_catalog_uninstall(): void {
+  $schema = \Drupal::database()->schema();
+  if ($schema->tableExists('sangel_catalog_product')) {
+    $schema->dropTable('sangel_catalog_product');
+  }
+}
+

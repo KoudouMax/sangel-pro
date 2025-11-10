@@ -1,0 +1,10 @@
+{% set catalog_title = label|render %}
+{% if catalog_title is empty %}
+	{% set catalog_title = node.label() %}
+{% endif %}
+
+{% set client_type_entity = node.hasField('field_client_type') and node.field_client_type.entity ? node.field_client_type.entity : null %}
+{% set client_type_label = client_type_entity ? client_type_entity.label() : '' %}
+{% set client_type_id = client_type_entity ? client_type_entity.id() : '' %}
+
+{{ drupal_view('products', 'catalog_products', client_type_id) }}

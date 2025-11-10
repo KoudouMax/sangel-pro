@@ -1,0 +1,9 @@
+<nav class="sp-menu" aria-label="Menu principal">
+  <ul class="sp-menu__list">
+    {% for item in items %}
+      <li class="sp-menu__item">
+        <a href="{{ item.url }}" class="sp-menu__link{% if item.in_active_trail %} active{% endif %}">{{ item.title }}</a>
+      </li>
+    {% endfor %}
+  </ul>
+</nav>

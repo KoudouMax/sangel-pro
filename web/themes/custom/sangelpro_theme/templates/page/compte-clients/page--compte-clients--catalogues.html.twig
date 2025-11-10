@@ -1,0 +1,6 @@
+{% embed '@sangelpro_theme/layout/page--compte-clients.html.twig' %}
+	{% block content %}
+		{{ drupal_view('product_catalog', 'for_current_user') }}
+	{% endblock %}
+
+{% endembed %}

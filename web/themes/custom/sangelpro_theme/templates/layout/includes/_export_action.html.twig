@@ -1,0 +1,113 @@
+{#
+  Minimal export button.
+
+  Parameters (all optional):
+    - label: Button text (default: "Exporter en CSV").
+    - helper: Optional helper text under the label.
+    - disabled: Boolean to disable the control.
+    - icon: Optional SVG/string. Defaults to a download arrow.
+    - variant: Visual theme (primary, secondary, ghost).
+    - size: Button size keyword (sm, md, lg).
+    - url: Pre-computed URL.
+    - route / route_parameters / route_options: Route to build the URL.
+    - view_id / display_id: Fallback route parameters for catalog export.
+    - attributes / classes: Additional HTML attributes / CSS classes.
+#}
+
+{% set label = label|default('Exporter en CSV'|t) %}
+{% set helper = helper|default('') %}
+{% set is_disabled = disabled|default(false) %}
+{% set variant = variant|default('primary') %}
+{% set size = size|default('sm') %}
+
+{% if attributes is not defined %}
+	{% set attributes = create_attribute() %}
+{% endif %}
+{% if attributes.removeClass is defined %}
+	{% set attributes = attributes.removeClass('min-h-screen', 'h-screen', 'max-h-screen', 'flex-col') %}
+{% endif %}
+
+{# Resolve URL #}
+{% set export_url = url|default('') %}
+{% if not export_url and route is defined and route %}
+	{% set export_url = path(route, route_parameters|default({}), route_options|default({})) %}
+{% elseif not export_url %}
+	{% set export_url = path('sangel_core.export_catalog_csv', {
+    'view_id': view_id|default('product_catalog'),
+    'display_id': display_id|default('for_current_user')
+  }, route_options|default({})) %}
+{% endif %}
+
+{# Icon #}
+{% set icon_markup = icon|default('') %}
+{% if icon_markup is empty %}
+	{% set icon_markup %}
+	<svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+		<path d="M12 3v12"/>
+		<path d="M6 11l6 6 6-6"/>
+		<path d="M5 19h14"/>
+	</svg>
+	{% endset %}
+{% endif %}
+
+{# Classes #}
+{% set size_classes = {
+  'sm': ['px-3', 'py-1', 'text-xs', 'gap-2'],
+  'md': ['px-4', 'py-1.5', 'text-sm', 'gap-2.5'],
+  'lg': ['px-5', 'py-2', 'text-base', 'gap-3']
+}|default([]) %}
+
+{% set variant_classes = {
+  'primary': ['border', 'border-sangel-primary', 'text-sangel-primary', 'hover:bg-sangel-primary/10', 'focus:ring-sangel-primary/20'],
+  'secondary': ['border', 'border-sangel-ice', 'text-sangel-text', 'hover:bg-sangel-ice', 'hover:text-sangel-primary', 'focus:ring-sangel-primary/20'],
+  'ghost': ['border', 'border-transparent', 'text-sangel-text', 'hover:border-sangel-primary/30', 'hover:text-sangel-primary', 'focus:ring-sangel-primary/20']
+}|default([]) %}
+
+{% set base_classes = [
+  'export-action',
+  'inline-flex',
+  'items-center',
+  'rounded-full',
+  'font-semibold',
+  'transition',
+  'focus:outline-none',
+  'focus:ring-2'
+] %}
+
+{% set all_classes = base_classes
+  |merge(size_classes[size]|default(size_classes['md']))
+  |merge(variant_classes[variant]|default(variant_classes['primary']))
+  |merge(classes|default([])) %}
+
+{% set helper_classes = [
+  'text-[11px]',
+  'font-medium',
+  variant == 'primary' ? 'text-sangel-primary/70' : 'text-sangel-text/60'
+] %}
+
+{% if is_disabled or export_url is empty %}
+  {% set all_classes = all_classes|merge(['opacity-50', 'pointer-events-none']) %}
+  <span {{ attributes.addClass(all_classes) }} role="button" aria-disabled="true">
+    <span class="inline-flex h-4 w-4 items-center justify-center">
+      {{ icon_markup|raw }}
+    </span>
+    <span class="inline-flex flex-row items-center gap-2 text-left leading-tight">
+      <span class="leading-none">{{ label }}</span>
+      {% if helper %}
+        <span class="{{ helper_classes|join(' ') }}">{{ helper }}</span>
+      {% endif %}
+    </span>
+  </span>
+{% else %}
+  <a href="{{ export_url }}" {{ attributes.addClass(all_classes) }} role="button">
+    <span class="inline-flex h-4 w-4 items-center justify-center">
+      {{ icon_markup|raw }}
+    </span>
+    <span class="inline-flex flex-row items-center gap-2 text-left leading-tight">
+      <span class="leading-none">{{ label }}</span>
+      {% if helper %}
+				<span class="{{ helper_classes|join(' ') }}">{{ helper }}</span>
+			{% endif %}
+		</span>
+	</a>
+{% endif %}

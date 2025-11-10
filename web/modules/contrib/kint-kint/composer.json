@@ -1,0 +1,40 @@
+{
+    "name": "drupal/kint",
+    "description": "Kint dumping tool, drupal-specific kint configs, and devel integration",
+    "type": "drupal-module",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": ">= 8",
+        "drupal/core": ">= 9",
+        "kint-php/kint": "^6.0.1",
+        "kint-php/kint-twig": "^6"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2",
+        "phpstan/extension-installer": "^1.4",
+        "mglaman/phpstan-drupal": "^2",
+        "phpstan/phpstan-deprecation-rules": "^2",
+        "drupal/coder": "^8.3",
+        "drupal/devel": "^5"
+    },
+    "conflict": {
+        "drupal/devel": "<5.3.0"
+    },
+    "suggest": {
+        "drupal/devel": "Various blocks, pages, and functions for developers."
+    },
+    "autoload": {
+        "files": ["init.php"]
+    },
+    "extra": {
+        "kint": {
+            "disable-helpers": true
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "phpstan/extension-installer": true
+        }
+    }
+}

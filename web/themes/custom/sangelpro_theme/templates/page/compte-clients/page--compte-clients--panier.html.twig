@@ -1,0 +1,7 @@
+{% embed '@sangelpro_theme/layout/page--compte-clients.html.twig' %}
+
+	{% block content %}
+		{{ drupal_view('cart', 'user_cart') }}
+	{% endblock %}
+
+{% endembed %}

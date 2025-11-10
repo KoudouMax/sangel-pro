@@ -1,0 +1,14 @@
+import-feedback:
+  css:
+    theme:
+      css/import-feedback.css: {}
+  js:
+    js/import-feedback.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+
+import_form:
+  css:
+    theme:
+      css/import-form.css: {}

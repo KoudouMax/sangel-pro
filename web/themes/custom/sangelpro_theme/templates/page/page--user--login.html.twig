@@ -1,0 +1,37 @@
+{{ attach_library('sangelpro_theme/global-styling') }}
+{{ attach_library('sangelpro_theme/global-scripts') }}
+
+{% include '@sangelpro_theme/layout/includes/_auth-shell.html.twig' with {
+  page: page,
+  attributes: attributes,
+  directory: directory,
+  page_modifier: 'auth-shell--login',
+  shell_modifier: 'auth-shell--login',
+  title: 'Connexion'|t,
+  subtitle: 'Accédez à votre espace professionnel et retrouvez vos catalogues en un clin d’œil.'|t,
+  visual_badge: 'Portail pro Sangel'|t,
+  visual_heading: 'Commandez, suivez et collaborez en toute simplicité'|t,
+  visual_description: 'Gardez la maîtrise de votre chaîne du froid : catalogues mis à jour, commandes optimisées et assistance dédiée où que vous soyez.'|t,
+  visual_features: [
+    {
+      title: 'Catalogues enrichis'|t,
+      description: 'Retrouvez chaque référence, vos tendances d’achats et les nouveautés en stock réel.'|t
+    },
+    {
+      title: 'Commandes orchestrées'|t,
+      description: 'Planifiez vos tournées, du panier validé au suivi de livraison, en quelques clics.'|t
+    },
+    {
+      title: 'Conseillers engagés'|t,
+      description: 'Discutez avec votre interlocuteur Sangel pour adapter vos volumes et co-construire vos menus.'|t
+    }
+  ],
+  visual_stat: {
+    highlight: '5 000+',
+    label: 'clients accompagnés'|t,
+    text: 'Des restaurateurs, collectivités et artisans s’appuient chaque jour sur la plateforme Sangel Pro.'|t
+  },
+  primary_link_route: 'user.pass',
+  primary_link_text: 'Mot de passe oublié ?'|t,
+  meta: 'Besoin d’aide ? Contactez votre interlocuteur Sangel ou le support dédié.'|t
+} only %}

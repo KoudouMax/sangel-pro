@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies: {  }
+name: 'Product sub-family'
+vid: product_sub_family
+description: 'Sub-family taxonomy to refine product classification.'
+hierarchy: 1
+weight: 0
+translatable: false
+default_langcode: true

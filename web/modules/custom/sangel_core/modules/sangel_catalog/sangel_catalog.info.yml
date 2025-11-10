@@ -1,0 +1,15 @@
+name: "Sangel Catalog"
+type: module
+description: "Catalog management with product grouping, CSV import/export, and client assignment."
+core_version_requirement: ^10 || ^11
+package: Sangel
+dependencies:
+  - drupal:node
+  - drupal:user
+  - drupal:taxonomy
+  - drupal:views
+  - drupal:menu_ui
+  - feeds:feeds
+  - sangel_core
+  - sangel_product
+  - sangel_client

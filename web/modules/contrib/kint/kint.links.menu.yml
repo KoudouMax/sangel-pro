@@ -1,0 +1,5 @@
+kint.form:
+  title: 'Kint settings'
+  description: 'Configure Kint settings.'
+  route_name: kint.form
+  parent: 'system.admin_config_development'

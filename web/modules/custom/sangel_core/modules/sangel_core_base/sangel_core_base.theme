@@ -1,0 +1,25 @@
+<?php
+
+use Drupal\Core\Render\RenderableInterface;
+
+/**
+ * Implements hook_theme().
+ */
+function sangel_core_base_theme($existing, $type, $theme, $path) {
+  return [
+    'sangel_core_placeholder_page' => [
+      'variables' => [
+        'identifier' => NULL,
+        'title' => NULL,
+      ],
+      'template' => 'sangel-core-placeholder-page',
+    ],
+    'sangel_core_cart_items' => [
+      'variables' => [
+        'items' => [],
+        'empty_text' => NULL,
+      ],
+      'template' => 'sangel-core-cart-items',
+    ],
+  ];
+}

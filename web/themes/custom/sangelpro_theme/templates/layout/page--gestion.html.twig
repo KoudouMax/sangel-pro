@@ -1,0 +1,13 @@
+{% extends '@sangelpro_theme/layout/page.html.twig' %}
+
+{% set category_nav_classes = ['bg-sangel-ice-light'] %}
+{% set page_title_section_classes = ['mx-auto', 'w-full', 'max-w-7xl', 'px-4', 'mt-6'] %}
+{% set main_classes = ['mx-auto', 'flex', 'w-full', 'max-w-7xl', 'flex-1', 'flex-col', 'gap-8', 'px-4', 'py-10', 'lg:flex-row'] %}
+
+{% block pre_content %}
+	{% if page.pre_content %}
+		<section class="mx-auto w-full max-w-7xl px-4">
+			{{ page.pre_content }}
+		</section>
+	{% endif %}
+{% endblock %}

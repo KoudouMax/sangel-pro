@@ -1,0 +1,89 @@
+{% set label = node.label() %}
+{% set image_url = node.field_image_url.value ?? '' %}
+{% set price = node.field_price.value is not empty ? node.field_price.value|number_format(0, ',', ' ') : '' %}
+{% set sku = node.field_sku.value ?? '' %}
+
+
+{% set client_type = node.field_client_type.entity ? node.field_client_type.entity.label : '' %}
+{% set family_label = node.field_family.entity ? node.field_family.entity.label : '' %}
+{% set sub_family_label = node.field_sub_family.entity ? node.field_sub_family.entity.label : '' %}
+{% set has_price = price is not empty %}
+
+{% set weight_value = node.field_weight.value ?? '' %}
+{% set unit_weight = node.field_unit_weight.value ?? '' %}
+{% set weight_display = '' %}
+{% if weight_value or unit_weight %}
+	{% set formatted_weight = weight_value ? weight_value|number_format(0, ',', ' ') : '' %}
+	{% set weight_display = formatted_weight ~ (unit_weight ? ' ' ~ unit_weight : '') %}
+{% endif %}
+
+{% set product_id = node.id() %}
+{% set url = path('entity.node.canonical', {'node': product_id}) %}
+{% set catalog_remove_target = 'catalog-item-' ~ product_id %}
+
+{% set catalog_add_url = path('sangel_product.catalog_add', {'node': product_id}) %}
+{% set addToCatalogText = is_client ? 'Ajouter à mon catalogue'|t : 'Ajouter à ma sélection'|t %}
+{% set route_node = app.request ? app.request.attributes.get('node') : null %}
+{% set is_export_context = route_node and route_node.bundle() == 'export' %}
+
+{{ attach_library('sangelpro_theme/product-actions') }}
+
+{% set classes = ['sangel-export-item'] %}
+{% if is_export_context %}
+	{% set classes = classes|merge(['sangel-export-item--static']) %}
+{% endif %}
+
+{% set attributes = attributes.addClass(classes).setAttribute('id', catalog_remove_target) %}
+
+<article{{attributes}}>
+	<div class="sangel-export-item__image">
+		<a href="{{ url }}" class="sangel-export-item__image-link">
+			{% if image_url %}
+				<img src="{{ image_url|escape }}" alt="{{ label|escape }}" loading="lazy"/>
+			{% else %}
+				<span aria-hidden="true">{{ 'Image'|t }}</span>
+			{% endif %}
+		</a>
+	</div>
+
+	<div class="sangel-export-item__body">
+		<div class="sangel-export-item__title-line">
+			<a href="{{ url }}" class="sangel-export-item__title">{{ label }}</a>
+			{% if sku %}
+				<span class="sangel-export-item__sku">{{ sku }}</span>
+			{% endif %}
+		</div>
+
+		<div class="sangel-export-item__details">
+			{% if has_price %}
+				<span class="sangel-export-item__price">{{ price }}&nbsp;F&nbsp;CFA</span>
+			{% endif %}
+			{# {% if weight_display %}
+							<span class="sangel-export-item__badge">{{ weight_display }}</span>
+						{% endif %} #}
+		</div>
+
+		<ul class="sangel-export-item__meta">
+			{% if family_label %}
+				<li class="sangel-export-item__meta-item">
+					<span class="sangel-export-item__meta-label text-xs">{{ 'Famille'|t }}</span>
+					<span class="sangel-export-item__meta-value text-xs sangel-export-item__badge">{{ family_label }}</span>
+				</li>
+			{% endif %}
+			{% if sub_family_label %}
+				<li class="sangel-export-item__meta-item">
+					<span class="sangel-export-item__meta-label text-xs">{{ 'Sous-famille'|t }}</span>
+					<span class="sangel-export-item__meta-value text-xs sangel-export-item__badge">{{ sub_family_label }}</span>
+				</li>
+			{% endif %}
+		</ul>
+	</div>
+
+	{% if is_commercial and not is_export_context %}
+		<div class="sangel-export-item__actions">
+			<a href="{{ catalog_add_url }}" class="sangel-export-item__action sangel-export-item__action--secondary sangel-card__button--ajax {{ already_in_catalog ? 'is-disabled' }}" data-sangel-ajax-url="{{ already_in_catalog ? '' : catalog_add_url }}" data-sangel-counter="#sangel-product-catalog-count" {% if already_in_catalog %} aria-disabled="true" tabindex="-1" {% endif %}>
+				{{ already_in_catalog ? 'Déjà dans ma sélection'|t : addToCatalogText }}
+			</a>
+		</div>
+	{% endif %}
+</article>

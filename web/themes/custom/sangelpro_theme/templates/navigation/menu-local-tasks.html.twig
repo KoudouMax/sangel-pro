@@ -1,0 +1,15 @@
+{#
+# Custom styling wrapper for primary and secondary local tasks.
+#}
+{% if primary %}
+  <div class="primary-local-tasks">
+    <h2 class="visually-hidden">{{ 'Primary tabs'|t }}</h2>
+    <ul class="primary-local-tasks__list">{{ primary }}</ul>
+  </div>
+{% endif %}
+{% if secondary %}
+  <div class="secondary-local-tasks">
+    <h2 class="visually-hidden">{{ 'Secondary tabs'|t }}</h2>
+    <ul class="secondary-local-tasks__list">{{ secondary }}</ul>
+  </div>
+{% endif %}

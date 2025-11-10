@@ -1,0 +1,52 @@
+sangel_catalog.export:
+  path: "/catalog/{node}/export"
+  defaults:
+    _controller: '\Drupal\sangel_catalog\Controller\CatalogExportController::export'
+    _title: "Export catalog"
+  requirements:
+    _permission: "export sangel catalogs"
+    _entity_access: "node.view"
+  options:
+    parameters:
+      node:
+        type: entity:node
+
+sangel_catalog.export_export_products:
+  path: "/export/{export}/products"
+  defaults:
+    _controller: '\Drupal\sangel_catalog\Controller\ExportProductsController::download'
+    _title: "Export produits"
+  requirements:
+    _custom_access: '\Drupal\sangel_catalog\Controller\ExportProductsController::access'
+  options:
+    parameters:
+      export:
+        type: entity:node
+
+sangel_catalog.user_catalogs:
+  path: "/user/{user}/catalogs"
+  defaults:
+    _controller: '\Drupal\sangel_catalog\Controller\CatalogListController::userCatalogs'
+    _title: "Catalogs"
+  requirements:
+    _custom_access: '\Drupal\sangel_catalog\Controller\CatalogListController::accessUserCatalogs'
+  options:
+    parameters:
+      user:
+        type: entity:user
+
+sangel_catalog.commercial_import:
+  path: "/gestion/clients/import"
+  defaults:
+    _form: '\Drupal\sangel_catalog\Form\CommercialFeedImportForm'
+    _title: "Importer des produits"
+  requirements:
+    _permission: "import sangel catalogs"
+
+sangel_catalog.commercial_import_client:
+  path: "/gestion/clients/import-client"
+  defaults:
+    _form: '\Drupal\sangel_catalog\Form\CommercialClientFeedImportForm'
+    _title: "Importer un catalogue (client ciblé)"
+  requirements:
+    _permission: "import sangel catalogs"

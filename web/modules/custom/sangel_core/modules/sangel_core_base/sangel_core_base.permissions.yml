@@ -1,0 +1,7 @@
+view catalogues:
+  title: "View catalogues"
+  description: "View catalogues"
+
+administer sangel core:
+  title: "Administer Sangel Core"
+  description: "Administer Sangel Core module settings and configurations."

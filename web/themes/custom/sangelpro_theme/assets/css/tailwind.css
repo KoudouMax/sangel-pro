@@ -1,0 +1,1397 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    font-size: 16px;
+    --sangel-header-offset: 7rem;
+  }
+
+  body {
+    @apply bg-sangel-ice font-sans text-base leading-relaxed text-sangel-text antialiased;
+  }
+
+  h1 {
+    @apply text-4xl font-semibold text-sangel-text tracking-tight;
+  }
+
+  h2 {
+    @apply text-3xl font-semibold text-sangel-text tracking-tight;
+  }
+
+  h3 {
+    @apply text-2xl font-semibold text-sangel-text;
+  }
+
+  h4 {
+    @apply text-xl font-semibold text-sangel-text;
+  }
+
+  h5 {
+    @apply text-lg font-semibold text-sangel-text;
+  }
+
+  h6 {
+    @apply text-base font-semibold text-sangel-text/80;
+  }
+
+  p {
+    @apply text-base leading-relaxed text-sangel-text;
+  }
+
+  li {
+    @apply text-base leading-relaxed text-sangel-text;
+  }
+
+  small {
+    @apply text-sm leading-snug text-sangel-text/80;
+  }
+
+  strong {
+    @apply font-semibold text-sangel-text;
+  }
+}
+
+@layer components {
+  .auth-shell {
+    @apply flex min-h-screen flex-col bg-auth-overlay text-white md:flex-row;
+    background-image: radial-gradient(
+        120% 120% at 10% 10%,
+        rgba(58, 104, 170, 0.18),
+        transparent 55%
+      ),
+      radial-gradient(110% 110% at 90% 0%, rgba(12, 34, 63, 0.4), transparent 60%);
+  }
+
+  .auth-shell__visual {
+    @apply relative flex-1 overflow-hidden;
+    background-image: linear-gradient(
+      135deg,
+      rgba(19, 45, 83, 1) 0%,
+      rgba(32, 76, 137, 0.95) 50%,
+      rgba(12, 34, 63, 1) 100%
+    );
+  }
+
+  .auth-shell__visual::before {
+    content: "";
+    @apply absolute inset-0;
+    background-image: radial-gradient(
+        circle at 10% 20%,
+        rgba(255, 255, 255, 0.08),
+        transparent 45%
+      ),
+      radial-gradient(
+        circle at 75% 30%,
+        rgba(255, 255, 255, 0.12),
+        transparent 55%
+      ),
+      linear-gradient(
+        120deg,
+        rgba(6, 20, 41, 0.6) 0%,
+        rgba(9, 25, 52, 0.8) 55%,
+        rgba(13, 38, 76, 0.75) 100%
+      );
+  }
+
+  .auth-shell__visual-inner {
+    @apply relative flex h-full w-full flex-col justify-between gap-10 p-8 md:flex-row md:items-end md:gap-12 md:p-12;
+  }
+
+  .auth-shell__flakes {
+    @apply absolute inset-0 pointer-events-none;
+    background-image: radial-gradient(
+        circle at 15% 20%,
+        rgba(255, 255, 255, 0.35) 0,
+        rgba(255, 255, 255, 0) 55%
+      ),
+      radial-gradient(
+        circle at 80% 30%,
+        rgba(255, 255, 255, 0.25) 0,
+        rgba(255, 255, 255, 0) 55%
+      );
+  }
+
+  .auth-shell__visual-copy {
+    @apply flex max-w-xl flex-col gap-6 md:gap-8;
+  }
+
+  .auth-shell__visual-badge {
+    @apply inline-flex w-max items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-1 text-xs font-semibold uppercase text-white/70 md:text-sm;
+    letter-spacing: 0.35em;
+  }
+
+  .auth-shell__visual-title {
+    @apply text-4xl font-bold leading-tight text-white md:text-5xl md:leading-tight;
+  }
+
+  .auth-shell__visual-text {
+    @apply text-base leading-relaxed text-white/80 md:text-lg;
+  }
+
+  .auth-shell__feature-list {
+    @apply flex flex-col gap-5;
+  }
+
+  .auth-shell__feature {
+    @apply flex items-start gap-4;
+  }
+
+  .auth-shell__feature-dot {
+    @apply mt-1 h-3 w-3 flex-none rounded-full bg-white/70;
+    box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.12);
+  }
+
+  .auth-shell__feature-body {
+    @apply flex flex-col gap-1;
+  }
+
+  .auth-shell__feature-title {
+    @apply text-base font-semibold text-white;
+  }
+
+  .auth-shell__feature-desc {
+    @apply text-sm text-white/75;
+  }
+
+  .auth-shell__visual-side {
+    @apply flex w-full flex-col gap-6 md:w-auto md:max-w-xs md:items-end;
+  }
+
+  .auth-shell__visual-logo {
+    @apply text-sm font-medium text-white/70;
+  }
+
+  .auth-shell__stat-card {
+    @apply w-full max-w-xs rounded-3xl border border-white/15 bg-white/10 p-6 text-left shadow-xl backdrop-blur;
+  }
+
+  .auth-shell__stat-highlight {
+    @apply text-4xl font-bold text-white md:text-5xl;
+  }
+
+  .auth-shell__stat-label {
+    @apply mt-2 text-xs font-semibold uppercase text-white/60;
+    letter-spacing: 0.35em;
+  }
+
+  .auth-shell__stat-text {
+    @apply mt-4 text-sm leading-relaxed text-white/75;
+  }
+
+  .auth-shell__flake {
+    @apply absolute text-white/60;
+  }
+
+  .auth-shell__flake--bottom {
+    @apply bottom-8 left-8 text-5xl md:bottom-10 md:left-10 md:text-6xl;
+  }
+
+  .auth-shell__flake--top {
+    @apply right-6 top-6 text-4xl text-white/40 md:right-10 md:top-10 md:text-5xl;
+  }
+
+  .auth-shell__panel {
+    @apply relative flex flex-1 items-center justify-center bg-auth-panel;
+    background-image: linear-gradient(
+      160deg,
+      rgba(8, 22, 43, 1) 0%,
+      rgba(9, 27, 52, 0.95) 55%,
+      rgba(6, 17, 35, 0.92) 100%
+    );
+  }
+
+  .auth-shell__content {
+    @apply w-full max-w-lg px-6 py-12 md:px-10 md:py-16;
+  }
+
+  .auth-shell__card {
+    @apply flex flex-col gap-6 rounded-3xl bg-white/95 p-8 text-sangel-text shadow-2xl backdrop-blur;
+  }
+
+  .auth-shell__logo {
+    @apply flex items-center gap-3 text-sangel-primary;
+  }
+
+  .auth-shell__title {
+    @apply text-3xl font-extrabold text-sangel-primary;
+  }
+
+  .auth-shell__subtitle {
+    @apply text-base leading-relaxed text-sangel-text/80;
+  }
+
+  .auth-shell__messages {
+    @apply space-y-3;
+  }
+
+  .auth-shell__messages .messages {
+    @apply rounded-2xl border border-sangel-ice-strong bg-sangel-ice/80 px-4 py-3 text-sm text-sangel-text;
+  }
+
+  .auth-shell__form {
+    @apply flex flex-col gap-4;
+  }
+
+  .auth-shell__field {
+    @apply relative;
+  }
+
+  .auth-shell__input {
+    @apply w-full rounded-2xl border border-sangel-ice-strong bg-white px-5 py-3.5 text-base text-sangel-text shadow-sm transition focus:border-sangel-primary focus:outline-none focus:ring-2 focus:ring-sangel-primary/30 focus:ring-offset-2 focus:ring-offset-white;
+  }
+
+  .auth-shell__actions {
+    @apply flex flex-col gap-3 pt-2;
+  }
+
+  .auth-shell__submit {
+    @apply w-full rounded-2xl bg-sangel-primary px-5 py-3 text-base font-semibold text-white shadow-utility transition hover:bg-sangel-primary-dark focus:outline-none focus:ring-2 focus:ring-sangel-primary focus:ring-offset-2 focus:ring-offset-white;
+  }
+
+  .auth-shell__links {
+    @apply flex flex-wrap items-center justify-between gap-4 text-sm text-sangel-primary;
+  }
+
+  .auth-shell__link {
+    @apply inline-flex items-center gap-2 font-semibold transition hover:text-sangel-primary-dark;
+  }
+
+  .auth-shell__meta {
+    @apply flex items-start gap-3 rounded-2xl border border-sangel-ice-strong bg-sangel-ice/80 px-4 py-3 text-sm text-sangel-text/80;
+  }
+
+  .catalog-view {
+    @apply flex flex-col gap-6;
+  }
+
+  .catalog-view__controls {
+    @apply flex items-center justify-end gap-2;
+  }
+
+  .catalog-view__toggle {
+    @apply inline-flex items-center gap-2 rounded-full border border-sangel-ice-strong bg-white px-4 py-2 text-sm font-medium text-sangel-text transition hover:bg-sangel-ice;
+  }
+
+  .catalog-view__toggle.is-active {
+    @apply border-sangel-primary bg-sangel-primary text-white shadow-md;
+  }
+
+  .catalog-view__content .view-content {
+    @apply grid gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4;
+  }
+
+  .sp-grid {
+    @apply grid gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4;
+  }
+
+  .sp-grid__col {
+    @apply flex h-full flex-col;
+  }
+
+  .sp-grid__col > .sangel-card {
+    @apply flex-1 w-full;
+  }
+
+  .catalog-view__empty {
+    @apply rounded-xl bg-white p-8 text-center text-sangel-text/70 shadow;
+  }
+
+  .product-action-form {
+    @apply w-full;
+  }
+
+  .product-action-form__actions {
+    @apply w-full;
+  }
+
+  .product-action-form__submit {
+    @apply inline-flex w-full items-center justify-center rounded-full bg-sangel-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-sangel-primary-dark;
+    box-shadow: 0 10px 20px rgba(29, 74, 156, 0.25);
+  }
+
+  .product-action-form__submit--catalog {
+    @apply bg-sangel-ice text-sangel-primary hover:bg-sangel-ice-strong;
+    box-shadow: none;
+  }
+
+  .product-action-form__quantity {
+    @apply mb-2 w-full rounded-full border border-sangel-ice-strong bg-white px-4 py-2 text-sm text-sangel-text focus:border-sangel-primary focus:outline-none;
+  }
+
+  .product-action-form__message {
+    @apply mt-2 text-xs text-sangel-primary;
+  }
+
+  .product-full {
+    @apply grid gap-8 rounded-2xl bg-white p-8 shadow-lg md:grid-cols-2;
+  }
+
+  .product-full__media {
+    @apply relative overflow-hidden rounded-2xl bg-sangel-ice flex items-center justify-center min-h-60;
+  }
+
+  .product-full__media img {
+    @apply h-full w-full object-contain;
+  }
+
+  .product-full__placeholder {
+    @apply flex h-full w-full items-center justify-center bg-sangel-ice text-sangel-text/40;
+  }
+
+  .product-full__body {
+    @apply flex flex-col gap-6;
+  }
+
+  .product-full__header {
+    @apply flex flex-col gap-4;
+  }
+
+  .product-full__tags {
+    @apply flex flex-wrap gap-2;
+  }
+
+  .product-full__tag {
+    @apply inline-flex items-center gap-1 rounded-full bg-sangel-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-sangel-primary;
+  }
+
+  .product-full__tag--muted {
+    @apply bg-sangel-ice text-sangel-text/70;
+  }
+
+  .product-full__title {
+    @apply text-3xl font-semibold text-sangel-primary;
+  }
+
+  .product-full__pricing {
+    @apply flex flex-col gap-1;
+  }
+
+  .product-full__price {
+    @apply text-4xl font-bold text-sangel-primary;
+  }
+
+  .product-full__price-note {
+    @apply text-xs uppercase tracking-wide text-sangel-text/50;
+  }
+
+  .product-full__description {
+    @apply text-base leading-relaxed text-sangel-text;
+  }
+
+  .product-full__meta {
+    @apply grid gap-4 sm:grid-cols-2;
+  }
+
+  .product-full__meta-item {
+    @apply rounded-xl bg-sangel-ice p-4;
+  }
+
+  .product-full__meta-label {
+    @apply text-xs uppercase tracking-wide text-sangel-text/60;
+  }
+
+  .product-full__meta-value {
+    @apply text-sm font-medium text-sangel-text;
+  }
+
+  .product-full__extras {
+    @apply space-y-4;
+  }
+
+  .product-full__purchase {
+    @apply grid gap-4 rounded-2xl border border-sangel-ice-strong bg-sangel-ice/40 p-4;
+  }
+
+  .product-full__purchase-total {
+    @apply flex items-baseline justify-between rounded-xl bg-white px-4 py-3 text-sangel-text shadow-sm;
+  }
+
+  .product-full__purchase-total-label {
+    @apply text-xs uppercase tracking-[0.25em] text-sangel-text/50;
+  }
+
+  .product-full__purchase-total-value {
+    @apply text-lg font-semibold text-sangel-primary;
+  }
+
+  .product-full__quantity {
+    @apply flex flex-col gap-1;
+  }
+
+  .product-full__quantity-label {
+    @apply text-xs font-semibold uppercase tracking-wide text-sangel-text/60;
+  }
+
+  .product-full__quantity-input {
+    @apply w-24 rounded-full border border-sangel-ice-strong bg-white px-4 py-2 text-sm font-semibold text-sangel-text focus:border-sangel-primary focus:outline-none;
+  }
+
+  .product-full__actions {
+    @apply flex flex-wrap gap-3;
+  }
+
+  .product-full__button {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sangel-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent;
+  }
+
+  .product-full__button--primary {
+    @apply bg-sangel-primary text-white shadow-md hover:bg-sangel-primary-dark;
+  }
+
+  .product-full__button--secondary {
+    @apply bg-white text-sangel-primary shadow-sm hover:bg-sangel-ice;
+  }
+
+  .product-full__button--disabled {
+    @apply cursor-not-allowed bg-sangel-ice text-sangel-text/40 shadow-none hover:bg-sangel-ice;
+  }
+
+  .sangel-shell {
+    @apply min-h-screen bg-sangel-ice text-sangel-text flex flex-col;
+  }
+
+  .sangel-header {
+    @apply sticky top-0 z-40 bg-white shadow-md;
+  }
+
+  .sangel-header__top {
+    @apply mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-6 md:flex-row md:items-center md:justify-between;
+  }
+
+  .sangel-header__brand {
+    @apply flex items-center gap-4 text-2xl font-bold text-sangel-primary;
+  }
+
+  .sangel-header__brand img {
+    @apply h-14 w-auto;
+  }
+
+  .sangel-header__search {
+    @apply flex-1;
+  }
+
+  .sangel-header__actions {
+    @apply flex items-center justify-end gap-6 text-sm text-sangel-text;
+  }
+
+  .sangel-header__actions a {
+    @apply inline-flex flex-col items-center gap-1 text-sangel-text transition hover:text-sangel-primary;
+  }
+
+  .sangel-header__action-label {
+    @apply text-xs font-semibold uppercase tracking-wide;
+  }
+
+  .sangel-header__action--selection,
+  .sangel-header__action--cart,
+  .sangel-header__action--history {
+    @apply inline-flex flex-col items-center;
+  }
+
+  .sangel-header-counter {
+    @apply inline-flex flex-col items-center;
+  }
+
+  .sangel-header-counter__link {
+    @apply relative inline-flex flex-col items-center text-sangel-text transition hover:text-sangel-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-sangel-primary focus-visible:ring-offset-2 focus-visible:ring-offset-white;
+  }
+
+  .sangel-header-counter__icon {
+    @apply relative flex h-12 w-12 items-center justify-center text-sangel-text/60;
+  }
+
+  .sangel-header-counter__svg {
+    @apply h-8 w-8;
+  }
+
+  .sangel-header-counter__badge {
+    @apply absolute -right-1 -top-1 inline-flex min-h-[1.25rem] min-w-[1.25rem] items-center justify-center rounded-full bg-sangel-primary px-1 text-xs font-semibold text-white shadow;
+  }
+
+  .sangel-header-counter__link.is-active .sangel-header-counter__icon,
+  .sangel-header-counter.is-active .sangel-header-counter__icon {
+    @apply text-sangel-primary font-bold;
+  }
+
+  .sangel-header-counter--history .sangel-header-counter__icon,
+  .sangel-header-counter--logout .sangel-header-counter__icon,
+  .sangel-header-counter--login .sangel-header-counter__icon {
+    @apply text-sangel-text/60;
+  }
+
+  .sangel-header-counter--history
+    .sangel-header-counter__link.is-active
+    .sangel-header-counter__icon,
+  .sangel-header-counter--history.is-active .sangel-header-counter__icon,
+  .sangel-header-counter--logout
+    .sangel-header-counter__link.is-active
+    .sangel-header-counter__icon,
+  .sangel-header-counter--logout.is-active .sangel-header-counter__icon,
+  .sangel-header-counter--login
+    .sangel-header-counter__link.is-active
+    .sangel-header-counter__icon,
+  .sangel-header-counter--login.is-active .sangel-header-counter__icon {
+    @apply text-sangel-primary;
+  }
+
+  .sangel-header-counter__label {
+    @apply text-xs font-semibold tracking-wide;
+  }
+
+  .sangel-header-counter__link.is-active .sangel-header-counter__label,
+  .sangel-header-counter.is-active .sangel-header-counter__label {
+    @apply text-sangel-primary;
+  }
+
+  .sangel-header__icon {
+    @apply inline-flex h-10 w-10 items-center justify-center rounded-full bg-sangel-ice text-sangel-primary shadow;
+  }
+
+  .sangel-header__icon svg {
+    @apply h-5 w-5;
+  }
+
+  .sangel-order-cart-items-wrapper {
+    @apply flex flex-col gap-4;
+  }
+
+  .sangel-order-cart-empty {
+    @apply rounded-2xl border border-dashed border-sangel-ice-strong bg-white/80 p-6 text-center text-sangel-text/70;
+  }
+
+  .sangel-order-cart-item {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    @apply gap-3 rounded-2xl border border-sangel-ice-strong bg-white p-4 shadow;
+  }
+
+  @media (min-width: 768px) {
+    .sangel-order-cart-item {
+      grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)) auto;
+      @apply items-center;
+    }
+  }
+
+  .sangel-order-cart-item__product {
+    @apply font-semibold text-sangel-primary;
+  }
+
+  .sangel-order-cart-item__unit,
+  .sangel-order-cart-item__subtotal {
+    @apply font-medium text-sangel-text md:text-right;
+  }
+
+  .sangel-order-cart-item__quantity {
+    @apply flex flex-col gap-1 md:items-center;
+  }
+
+  .sangel-order-cart-item__quantity-label {
+    @apply text-xs font-semibold uppercase tracking-wide text-sangel-text/60;
+  }
+
+  .sangel-order-cart-item__quantity-input {
+    @apply w-20 rounded-full border border-sangel-ice-strong bg-white px-3 py-1 text-center text-sm text-sangel-text focus:border-sangel-primary focus:outline-none;
+  }
+
+  .sangel-order-cart-item__actions {
+    @apply flex justify-start md:justify-end;
+  }
+
+  .sangel-order-cart-item__remove {
+    @apply inline-flex items-center justify-center rounded-full border border-sangel-ice-strong px-3 py-1 text-xs font-semibold text-sangel-text transition hover:border-sangel-accent hover:text-sangel-accent;
+  }
+
+  .sangel-catalog-products-list {
+    @apply flex flex-col gap-4;
+  }
+
+  .sangel-catalog-products__empty {
+    @apply rounded-2xl border border-dashed border-sangel-ice-strong bg-white/80 p-6 text-center text-sangel-text/70;
+  }
+
+  .sangel-catalog-product-row {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    @apply gap-3 rounded-2xl border border-sangel-ice-strong bg-white p-4 shadow;
+  }
+
+  @media (min-width: 768px) {
+    .sangel-catalog-product-row {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+      @apply items-center;
+    }
+  }
+
+  .sangel-catalog-product-row__title {
+    @apply font-semibold text-sangel-primary;
+  }
+
+  .sangel-catalog-product-row__client,
+  .sangel-catalog-product-row__price {
+    @apply font-medium text-sangel-text md:text-right;
+  }
+
+  .sangel-catalog-product-row__actions {
+    @apply flex justify-start md:justify-end;
+  }
+
+  .sangel-catalog-product__remove {
+    @apply inline-flex items-center justify-center rounded-full border border-sangel-ice-strong px-3 py-1 text-xs font-semibold text-sangel-text transition hover:border-sangel-accent hover:text-sangel-accent;
+  }
+
+  .primary-local-tasks {
+    @apply mb-6 flex items-center justify-between border-b border-sangel-ice-strong;
+  }
+
+  .primary-local-tasks__list {
+    @apply flex flex-wrap gap-2;
+  }
+
+  .primary-local-tasks__item {
+    @apply list-none;
+  }
+
+  .primary-local-tasks__link-wrapper a {
+    @apply inline-flex items-center gap-2 rounded-full border border-transparent px-4 py-2 text-sm font-semibold uppercase tracking-wide text-sangel-text transition hover:text-sangel-primary;
+  }
+
+  .primary-local-tasks__link-wrapper a.is-active {
+    @apply border-sangel-primary bg-sangel-primary text-white shadow;
+  }
+
+  .secondary-local-tasks {
+    @apply mt-4;
+  }
+
+  .secondary-local-tasks__list {
+    @apply flex flex-wrap gap-2;
+  }
+
+  .secondary-local-tasks__list li a {
+    @apply inline-flex items-center gap-2 rounded-full border border-sangel-ice-strong px-3 py-1 text-xs font-medium text-sangel-text transition hover:border-sangel-primary hover:text-sangel-primary;
+  }
+
+  .secondary-local-tasks__list li a.is-active {
+    @apply border-sangel-primary bg-sangel-primary text-white shadow;
+  }
+
+  button.form-submit,
+  input.form-submit,
+  .button.form-submit {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-sangel-primary px-5 py-2.5 text-sm font-semibold text-white shadow transition cursor-pointer;
+    @apply hover:bg-sangel-primary-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sangel-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white;
+    @apply disabled:cursor-not-allowed disabled:bg-sangel-ice disabled:text-sangel-text/50 disabled:shadow-none;
+  }
+
+  #edit-cancel,
+  button#edit-cancel,
+  input#edit-cancel,
+  .form-actions .button--cancel {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-sangel-primary px-5 py-2.5 text-sm font-semibold text-sangel-primary transition cursor-pointer;
+    @apply hover:bg-sangel-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sangel-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white;
+    @apply disabled:cursor-not-allowed disabled:border-sangel-ice disabled:text-sangel-text/50;
+  }
+
+  .form-actions {
+    @apply mt-6 mb-6 flex flex-wrap items-center justify-end gap-3 border-t border-sangel-ice/60 pt-4;
+  }
+
+  .form-actions .button,
+  .form-actions button,
+  .form-actions input[type="submit"],
+  .form-actions input[type="button"] {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition cursor-pointer;
+  }
+
+  .sangel-export {
+    @apply space-y-8 rounded-3xl bg-white p-8 shadow-lg;
+  }
+
+  .sangel-export__header {
+    @apply flex flex-col gap-6 md:flex-row md:items-start md:justify-between;
+  }
+
+  .sangel-export__meta {
+    @apply space-y-3;
+  }
+
+  .sangel-export__eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.3em] text-sangel-text/50;
+  }
+
+  .sangel-export__title {
+    @apply text-3xl font-bold text-sangel-primary;
+  }
+
+  .sangel-export__catalog {
+    @apply text-sm text-sangel-text/70;
+  }
+
+  .sangel-export__actions {
+    @apply flex flex-wrap items-center gap-3;
+  }
+
+  .sangel-export__action {
+    @apply inline-flex items-center gap-2 rounded-full border border-sangel-primary px-5 py-2 text-sm font-semibold text-sangel-primary transition hover:bg-sangel-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sangel-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white;
+  }
+
+  .sangel-export__action--primary {
+    @apply border-transparent bg-sangel-primary text-white shadow hover:bg-sangel-primary-dark;
+  }
+
+  .sangel-export__content {
+    @apply space-y-4 text-sm text-sangel-text leading-relaxed;
+  }
+
+  .sangel-export__products {
+    @apply space-y-6;
+  }
+
+  .sangel-export__products-header {
+    @apply flex flex-wrap items-center justify-between gap-3;
+  }
+
+  .sangel-export__section-title {
+    @apply text-xl font-semibold text-sangel-text;
+  }
+
+  .sangel-export__badge {
+    @apply inline-flex items-center gap-2 rounded-full bg-sangel-ice px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sangel-primary;
+  }
+
+  .sangel-export__list {
+    @apply space-y-3;
+  }
+
+  .sangel-export__list-item {
+    @apply list-none;
+  }
+
+  .sangel-export__empty {
+    @apply flex flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-sangel-ice/80 bg-white/70 p-12 text-center text-sangel-text/60;
+  }
+
+  .gestion-client-create {
+    @apply grid gap-8 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)];
+  }
+
+  .sangel-date-field {
+    @apply relative inline-flex min-w-[220px] items-center gap-2 rounded-2xl border border-sangel-ice-strong bg-white px-4 py-2 shadow-sm transition focus-within:border-sangel-primary focus-within:ring-2 focus-within:ring-sangel-primary/20;
+  }
+
+  .sangel-date-field__icon {
+    @apply text-sangel-primary/70 pointer-events-none;
+  }
+
+  .sangel-date-field__svg {
+    @apply h-5 w-5;
+  }
+
+  .sangel-date-field__input {
+    @apply w-full border-0 bg-transparent text-sm text-sangel-text outline-none focus:ring-0;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .sangel-date-field__input::-webkit-calendar-picker-indicator {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    opacity: 0;
+  }
+
+  .gestion-client-create__intro {
+    @apply space-y-5 rounded-3xl bg-white p-6 shadow-md border border-sangel-ice-strong;
+  }
+
+  .gestion-client-create__headline {
+    @apply text-xl font-semibold text-sangel-primary;
+  }
+
+  .gestion-client-create__lead {
+    @apply text-sm leading-relaxed text-sangel-text/70;
+  }
+
+  .gestion-client-create__checklist {
+    @apply space-y-4;
+  }
+
+  .gestion-client-create__checklist li {
+    @apply flex gap-3 rounded-2xl bg-sangel-ice/40 p-4;
+  }
+
+  .gestion-client-create__check-icon {
+    @apply flex h-7 w-7 items-center justify-center rounded-full bg-sangel-primary text-xs font-semibold text-white;
+  }
+
+  .gestion-client-create__check-title {
+    @apply text-sm font-semibold text-sangel-text;
+  }
+
+  .gestion-client-create__checklist p {
+    @apply text-xs text-sangel-text/60 mt-1;
+  }
+
+  .gestion-client-create__form {
+    @apply rounded-3xl bg-white p-6 shadow-md border border-sangel-ice-strong;
+  }
+
+  .form-type-date {
+    @apply flex flex-col gap-2;
+  }
+
+  .form-type-date label {
+    @apply text-xs font-semibold uppercase tracking-wide text-sangel-text/60;
+  }
+
+  .form-type-date input[type="date"],
+  .form-type-date input[type="datetime-local"],
+  .form-type-date input[type="time"] {
+    @apply w-full rounded-2xl border border-sangel-ice-strong bg-white px-4 py-2 text-sm text-sangel-text shadow-sm;
+    @apply focus:border-sangel-primary focus:outline-none focus:ring-2 focus:ring-sangel-primary/30;
+  }
+
+  .sangel-table__wrapper {
+    @apply relative -mx-4 overflow-x-auto px-4 pb-4;
+  }
+
+  .sangel-table {
+    @apply min-w-full border-collapse rounded-2xl bg-white text-sm text-sangel-text shadow;
+  }
+
+  .sangel-table thead {
+    @apply bg-sangel-ice-strong/50 text-xs font-semibold uppercase tracking-[0.25em] text-sangel-text/60;
+  }
+
+  .sangel-table__head tr {
+    @apply border-b border-sangel-ice-strong;
+  }
+
+  .sangel-table__header-cell {
+    @apply px-4 py-3 text-left align-middle;
+  }
+
+  .sangel-table__header-label {
+    @apply inline-flex items-center gap-2;
+  }
+
+  .sangel-table__sort-indicator {
+    @apply text-sangel-primary;
+  }
+
+  .sangel-table__body tr {
+    @apply border-b border-sangel-ice/70 transition hover:bg-sangel-ice/40;
+  }
+
+  .sangel-table__cell {
+    @apply px-4 py-3 align-middle text-sm text-sangel-text/80;
+  }
+
+  .sangel-table__row:last-child {
+    @apply border-b-0;
+  }
+
+  .sangel-table__row--empty td {
+    @apply py-10 text-center text-sangel-text/50;
+  }
+
+  .sangel-table__caption {
+    @apply mb-3 text-left text-sm font-semibold text-sangel-primary;
+  }
+
+  .sangel-table--views .views-field {
+    @apply text-sangel-text/80;
+  }
+
+  .sangel-table--views .views-field a {
+    @apply text-sangel-primary underline-offset-4 hover:underline;
+  }
+
+  .messages {
+    @apply relative mb-4 rounded-2xl border border-sangel-ice-strong bg-white/95 p-4 text-sm text-sangel-text shadow-lg;
+  }
+
+  .messages__container {
+    @apply flex items-start gap-3;
+  }
+
+  .messages__icon {
+    @apply flex h-10 w-10 flex-none items-center justify-center rounded-full bg-sangel-ice text-sangel-primary;
+  }
+
+  .messages__icon svg {
+    @apply h-5 w-5;
+  }
+
+  .messages__content {
+    @apply grow leading-relaxed;
+  }
+
+  .messages__list {
+    @apply list-disc space-y-1 pl-5;
+  }
+
+  .messages__item {
+    @apply text-left;
+  }
+
+  .messages--status {
+    border-left: 6px solid #1d4a9c;
+  }
+
+  .messages--status .messages__icon {
+    @apply text-sangel-primary;
+  }
+
+  .messages--warning {
+    border-left: 6px solid #ff4d1e;
+  }
+
+  .messages--warning .messages__icon {
+    @apply text-sangel-cta;
+  }
+
+  .messages--error {
+    border-left: 6px solid #f15b5b;
+  }
+
+  .messages--error .messages__icon {
+    @apply text-sangel-accent;
+  }
+
+  .messages--info {
+    border-left: 6px solid #1d4a9c;
+  }
+
+  .messages--info .messages__icon {
+    @apply text-sangel-primary;
+  }
+
+  #block-home-catalog-products-search-block
+    #views-exposed-form-home-catalog-products-search {
+    @apply relative flex flex-row items-center justify-center;
+  }
+
+  #block-home-catalog-products-search-block
+    #views-exposed-form-home-catalog-products-search
+    input.form-text {
+    @apply relative rounded-full flex-1;
+  }
+
+  #block-home-catalog-products-search-block
+    #views-exposed-form-home-catalog-products-search
+    .form-actions {
+    @apply hidden;
+  }
+
+  #block-home-catalog-products-search-block
+    #views-exposed-form-home-catalog-products-search,
+  .sangel-search {
+    @apply relative flex w-full max-w-2xl items-center gap-3 rounded-full border border-sangel-ice-strong bg-white px-4 py-2 shadow-inner;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6),
+      0 12px 24px rgba(17, 48, 109, 0.12);
+  }
+
+  .sangel-search__icon {
+    @apply text-sangel-primary/70 flex items-center;
+  }
+
+  .sangel-search__widget {
+    @apply flex-1;
+  }
+
+  .sangel-search__widgets {
+    @apply flex flex-1 items-center gap-3 pr-2;
+  }
+
+  .sangel-search__widget input[type="text"],
+  .sangel-search__widget input[type="search"] {
+    @apply w-full border-none bg-transparent text-base text-sangel-text placeholder-sangel-text/40 focus:outline-none;
+    text-shadow: none;
+  }
+
+  .sangel-search input[type="text"],
+  .sangel-search input[type="search"] {
+    @apply block w-full border-none bg-transparent text-base text-sangel-text placeholder-sangel-text/40 focus:outline-none shadow-none;
+  }
+
+  .sangel-search__submit {
+    @apply inline-flex items-center gap-2 rounded-full bg-sangel-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-sangel-primary-dark;
+    box-shadow: 0 8px 16px rgba(29, 74, 156, 0.25);
+  }
+
+  .sangel-search__actions input[type="submit"],
+  .sangel-search__actions button {
+    @apply inline-flex items-center gap-2 rounded-full bg-sangel-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-sangel-primary-dark border-none cursor-pointer shadow;
+  }
+
+  .sangel-search__actions {
+    @apply flex items-center;
+  }
+
+  .sangel-hero {
+    @apply relative mx-auto w-full max-w-7xl overflow-hidden rounded-3xl bg-white px-4 pb-6 shadow;
+  }
+
+  .sangel-categories {
+    @apply mx-auto flex w-full max-w-7xl flex-wrap items-center gap-4 px-4 pb-6;
+  }
+
+  .sangel-categories .view-content {
+    @apply flex flex-wrap items-center gap-4;
+  }
+
+  .sangel-main {
+    @apply mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-8;
+  }
+
+  .sangel-main__head {
+    @apply flex flex-col gap-3 md:flex-row md:items-center md:justify-between;
+  }
+
+  .sangel-breadcrumb {
+    @apply text-sm text-sangel-text/60;
+  }
+
+  .sangel-page-title {
+    @apply text-2xl font-semibold text-sangel-primary;
+  }
+
+  .sangel-pre-content {
+    @apply rounded-xl bg-white p-6 shadow;
+  }
+
+  .sangel-main__body {
+    @apply grid gap-6;
+  }
+
+  @media (min-width: 1024px) {
+    .sangel-main__body {
+      grid-template-columns: minmax(0, 1fr) 300px;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .sangel-main__body {
+      grid-template-columns: minmax(0, 1fr) 280px 260px;
+    }
+  }
+
+  .sangel-main__content {
+    @apply rounded-xl bg-white p-6 shadow;
+  }
+
+  .sangel-main__sidebar,
+  .sangel-main__selection {
+    @apply rounded-xl bg-white p-5 shadow;
+  }
+
+  .sangel-footer {
+    @apply mt-auto bg-sangel-primary text-white;
+  }
+
+  .sangel-footer__primary {
+    @apply mx-auto w-full max-w-7xl px-4 py-6;
+  }
+
+  .sangel-footer__secondary {
+    @apply px-4 py-4 text-center text-sm;
+    background-color: rgba(17, 48, 109, 0.9);
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .sangel-category-pill {
+    @apply flex flex-col items-center justify-center gap-2 rounded-full border border-sangel-ice-strong bg-white px-6 py-4 text-center text-sm font-semibold text-sangel-text shadow transition hover:-translate-y-1 hover:shadow-lg;
+  }
+
+  .sangel-card {
+    @apply flex h-full flex-col rounded-2xl border border-sangel-ice-strong bg-white shadow-lg transition hover:-translate-y-1 hover:shadow-xl;
+  }
+
+  .sangel-card__media {
+    @apply aspect-square overflow-hidden rounded-t-2xl bg-white;
+  }
+
+  .sangel-card__media img {
+    @apply h-full w-full object-contain;
+  }
+
+  .sangel-card__placeholder {
+    @apply flex h-full w-full items-center justify-center bg-sangel-ice text-sangel-text/30;
+  }
+
+  .sangel-card__content {
+    @apply grid flex-1 gap-3 p-4 text-center;
+    /* grid-template-rows: repeat(4, minmax(0, 1fr)); */
+  }
+
+  .sangel-card__slot {
+    @apply flex flex-col justify-center;
+  }
+
+  .sangel-card__slot--actions {
+    @apply justify-end;
+  }
+
+  .sangel-card__slot.is-empty {
+    @apply text-sangel-text/40;
+  }
+
+  .sangel-card__title {
+    @apply text-base font-semibold text-sangel-text;
+  }
+
+  .sangel-card__title a {
+    @apply text-sangel-text transition hover:text-sangel-primary;
+  }
+
+  .sangel-card__price {
+    @apply text-lg font-semibold text-sangel-primary;
+  }
+
+  .sangel-card__price--empty {
+    @apply font-normal text-sangel-text/40;
+  }
+
+  .sangel-card__meta {
+    @apply flex flex-wrap items-center justify-center gap-2 text-xs text-sangel-text/70;
+  }
+
+  .sangel-card__meta-placeholder {
+    @apply text-sangel-text/40;
+  }
+
+  .sangel-card__sku {
+    @apply font-semibold text-sangel-text;
+  }
+
+  .sangel-card__tag {
+    @apply inline-flex items-center gap-1 rounded-full bg-sangel-ice px-3 py-1 text-xs font-semibold text-sangel-primary;
+  }
+
+  .sangel-card__actions {
+    @apply flex flex-col justify-end gap-2;
+  }
+
+  .sangel-card__actions form {
+    @apply w-full;
+  }
+
+  .sangel-card__button {
+    @apply inline-flex items-center justify-center rounded-full bg-sangel-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-sangel-primary-dark;
+  }
+
+  .sangel-card__button--secondary {
+    @apply bg-sangel-ice text-sangel-primary hover:bg-sangel-ice-strong;
+  }
+
+  .catalog-view--list .catalog-view__content .view-content {
+    @apply grid gap-4 grid-cols-1 md:grid-cols-2;
+  }
+
+  .catalog-view--list .view-content .sangel-card {
+    @apply flex-row items-center text-left w-full;
+  }
+
+  .catalog-view--list .sangel-card__media {
+    @apply aspect-square w-32 flex-shrink-0 rounded-l-2xl rounded-r-none bg-white;
+  }
+
+  .catalog-view--list .sangel-card__content {
+    @apply items-start gap-3 text-left;
+  }
+
+  .catalog-view--list .sangel-card__actions {
+    @apply flex-row items-start justify-start gap-3 pt-0;
+  }
+
+  .catalog-view__title {
+    @apply text-3xl font-semibold text-sangel-primary;
+  }
+
+  .catalog-view__header,
+  .catalog-view__footer {
+    @apply rounded-xl bg-white p-4 shadow;
+  }
+
+  .catalog-view__exposed,
+  .catalog-view__attachment {
+    @apply rounded-xl bg-white p-4 shadow;
+  }
+
+  .catalog-view__pager {
+    @apply flex justify-center;
+  }
+
+  .is-disabled {
+    @apply pointer-events-none opacity-50;
+  }
+}
+.form-type-select {
+  @apply flex flex-col gap-2;
+}
+
+.form-type-select label {
+  @apply text-xs font-semibold uppercase tracking-wide text-sangel-text/60;
+}
+
+.form-type-select select {
+  @apply w-full rounded-2xl border border-sangel-ice-strong bg-white px-4 py-2 text-sm text-sangel-text shadow-sm;
+  @apply focus:border-sangel-primary focus:outline-none focus:ring-2 focus:ring-sangel-primary/30;
+}
+
+.sangel-export-item {
+  @apply flex flex-col gap-4 rounded-2xl border border-sangel-ice-strong bg-white p-4 shadow-sm md:flex-row md:items-center md:gap-6;
+}
+
+.sangel-export-item--compact {
+  @apply gap-3 rounded-xl p-3 md:gap-4;
+}
+
+.sangel-export-item__image {
+  @apply flex h-20 w-28 items-center justify-center overflow-hidden rounded-2xl bg-sangel-ice text-xs font-semibold uppercase tracking-wide text-sangel-text/40 md:h-24 md:w-32;
+}
+
+.sangel-export-item--compact .sangel-export-item__image {
+  @apply h-12 w-12 rounded-xl md:h-14 md:w-14;
+}
+
+.sangel-export-item__image img {
+  @apply h-full w-full object-cover;
+}
+
+.sangel-export-item__body {
+  @apply flex-1 space-y-2;
+}
+
+.sangel-export-item__title-line {
+  @apply flex flex-wrap items-baseline gap-2;
+}
+
+.sangel-export-item__title {
+  @apply text-base font-semibold text-sangel-text md:text-lg;
+}
+
+.sangel-export-item--compact .sangel-export-item__title {
+  @apply text-sm md:text-base;
+}
+
+.sangel-export-item__sku {
+  @apply text-xs font-semibold uppercase tracking-wide text-sangel-text/50;
+}
+
+.sangel-export-item__details {
+  @apply flex flex-wrap items-center gap-3 text-sm text-sangel-text/70;
+}
+
+.sangel-export-item__price {
+  @apply font-semibold text-sangel-primary;
+}
+
+.sangel-export-item__badge {
+  @apply inline-flex items-center gap-2 rounded-full bg-sangel-ice px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sangel-primary;
+}
+
+.sangel-export-item__meta {
+  @apply flex flex-wrap gap-3 text-xs text-sangel-text/60 md:text-sm;
+}
+
+.sangel-export-item__meta-item {
+  @apply flex items-center gap-1;
+}
+
+.sangel-export-item__meta-label {
+  @apply font-semibold uppercase tracking-wide text-sangel-text/50;
+}
+
+.sangel-export-item__meta-value {
+  @apply text-sangel-text;
+}
+
+.sangel-export-item__actions {
+  @apply flex items-center justify-end gap-2;
+}
+
+.sangel-export-item__action {
+  @apply inline-flex items-center gap-2 rounded-full border border-sangel-primary px-4 py-2 text-xs font-semibold uppercase tracking-wide text-sangel-primary transition hover:bg-sangel-primary/10;
+}
+
+.sangel-export-item__action--primary {
+  @apply border-sangel-primary bg-sangel-primary text-white hover:bg-sangel-primary-dark;
+}
+
+.sangel-export-item__action--secondary {
+  @apply border-sangel-primary bg-white text-sangel-primary;
+}
+
+.sangel-export-item__action--danger {
+  @apply border-red-200 text-red-500 hover:border-red-400 hover:text-red-600;
+}
+
+.sangel-filters {
+  @apply rounded-3xl border border-sangel-ice-strong bg-white/95 p-5 shadow-sm lg:p-6;
+}
+
+.sangel-filters > .block {
+  @apply space-y-4 rounded-2xl border border-sangel-ice-strong bg-white p-4 shadow-sm;
+}
+
+.sangel-filters :is(h2, h3, legend) {
+  @apply text-sm font-semibold uppercase text-sangel-text/50;
+  letter-spacing: 0.22em;
+}
+
+.sangel-filters label {
+  @apply text-xs font-semibold uppercase text-sangel-text/60;
+  letter-spacing: 0.18em;
+}
+
+.sangel-filters input[type="text"],
+.sangel-filters input[type="search"],
+.sangel-filters input[type="number"],
+.sangel-filters input[type="tel"],
+.sangel-filters input[type="email"],
+.sangel-filters input[type="date"],
+.sangel-filters input[type="time"],
+.sangel-filters select,
+.sangel-filters textarea {
+  @apply w-full rounded-2xl border border-sangel-ice-strong bg-sangel-ice px-4 py-2 text-sm text-sangel-text transition focus:border-sangel-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-sangel-primary/20;
+}
+
+.sangel-filters button,
+.sangel-filters [type="submit"],
+.sangel-filters [type="button"],
+.sangel-filters .button {
+  @apply inline-flex w-full items-center justify-center gap-2 rounded-full bg-sangel-primary px-4 py-2 text-sm font-semibold uppercase text-white transition hover:bg-sangel-primary/90 focus:outline-none focus:ring-2 focus:ring-sangel-primary/40;
+  letter-spacing: 0.18em;
+}
+
+.sangel-filters .form-item {
+  @apply space-y-2;
+}
+
+.sangel-filters .form-item + .form-item {
+  @apply mt-4;
+}
+
+.sangel-filters .form-actions {
+  @apply mt-6 flex flex-col gap-2;
+}
+
+.sangel-filters .bef-checkboxes,
+.sangel-filters .form-checkboxes,
+.sangel-filters .options,
+.sangel-filters .form-radios {
+  @apply flex flex-col gap-2;
+}
+
+.sangel-filters input[type="checkbox"],
+.sangel-filters input[type="radio"] {
+  @apply h-4 w-4 rounded border-sangel-ice-strong text-sangel-primary focus:ring-sangel-primary/40;
+}

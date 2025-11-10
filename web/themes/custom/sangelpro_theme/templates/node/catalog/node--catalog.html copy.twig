@@ -1,0 +1,92 @@
+{#
+/**
+ * @file
+ * Theme override to display a catalog node.
+ */
+#}
+
+{% set catalog_title = label|render %}
+{% if catalog_title is empty %}
+	{% set catalog_title = node.label() %}
+{% endif %}
+
+{% set client_type_entity = node.hasField('field_client_type') and node.field_client_type.entity ? node.field_client_type.entity : null %}
+{% set client_type_label = client_type_entity ? client_type_entity.label() : '' %}
+{% set client_type_id = client_type_entity ? client_type_entity.id() : '' %}
+
+{% set product_items = node.hasField('field_catalog_products') ? node.field_catalog_products : [] %}
+{% set product_count = product_items is iterable ? product_items|length : 0 %}
+
+{% set client_items = node.hasField('field_catalog_clients') ? node.field_catalog_clients : [] %}
+{% set client_count = client_items is iterable ? client_items|length : 0 %}
+
+{% set additional_content = content|without('field_catalog_products', 'field_catalog_clients', 'field_client_type', 'links') %}
+{% set additional_content_rendered = additional_content|render %}
+
+<article{{attributes.addClass('space-y-10')}}>
+
+	{{ title_prefix }}
+	<header class="rounded-3xl border border-sangel-ice-strong bg-white/80 px-6 py-8 shadow-sm">
+		<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+			<div>
+				<p class="text-xs font-semibold uppercase tracking-[0.3em] text-sangel-text/60">{{ 'Catalogue'|t }}</p>
+				<h2 class="mt-2 text-3xl font-extrabold tracking-tight text-sangel-text sm:text-4xl">
+					{{ catalog_title }}
+				</h2>
+			</div>
+			{% if client_type_label %}
+				<span class="inline-flex items-center rounded-full border border-sangel-primary/30 bg-sangel-primary/10 px-4 py-2 text-sm font-semibold text-sangel-primary">
+					{{ client_type_label }}
+				</span>
+			{% endif %}
+		</div>
+		<dl class="mt-6 flex flex-wrap gap-4 text-sm text-sangel-text/70">
+			<div class="flex items-center gap-2">
+				<dt class="font-semibold text-sangel-text/80">{{ 'Produits'|t }}
+					:</dt>
+				<dd class="rounded-full bg-sangel-ice px-3 py-1 text-sm font-semibold text-sangel-text">{{ product_count }}</dd>
+			</div>
+			{% if client_count %}
+				<div class="flex items-center gap-2">
+					<dt class="font-semibold text-sangel-text/80">{{ 'Clients associés'|t }}
+						:</dt>
+					<dd class="rounded-full border border-sangel-ice px-3 py-1 text-sm font-semibold text-sangel-text/80">{{ client_count }}</dd>
+				</div>
+			{% endif %}
+		</dl>
+	</header>
+	{{ title_suffix }}
+
+	{% if product_count > 0 %}
+		<div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+			{% for item in product_items %}
+				{% set product = item.entity ?? null %}
+				{% if product %}
+					<div class="h-full">
+						{{ drupal_entity('node', product.id(), 'teaser') }}
+					</div>
+				{% endif %}
+			{% endfor %}
+		</div>
+	{% else %}
+		<div class="rounded-3xl border border-dashed border-sangel-ice bg-white/70 px-8 py-12 text-center shadow-sm">
+			<h3 class="text-xl font-semibold text-sangel-text/80">{{ 'Aucun produit dans ce catalogue pour le moment.'|t }}</h3>
+			<p class="mt-3 text-sm text-sangel-text/60">{{ 'Ajoutez des produits pour construire votre sélection personnalisée.'|t }}</p>
+		</div>
+	{% endif %}
+
+	{% if additional_content_rendered|trim %}
+		<div class="space-y-6">
+			{{ additional_content_rendered }}
+		</div>
+	{% endif %}
+
+	{% if content.links %}
+		<div class="pt-6">
+			{{ content.links }}
+		</div>
+	{% endif %}
+
+	{{ drupal_view('products', 'catalog_products', client_type_id) }}
+
+</article>

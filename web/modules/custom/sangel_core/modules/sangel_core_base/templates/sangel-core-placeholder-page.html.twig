@@ -1,0 +1,131 @@
+{#
+  Placeholder template rendered for upcoming dashboard pages.
+  Variables:
+  - identifier: Machine name for the placeholder (used for CSS hooks).
+  - title: Human readable title.
+#}
+{% if is_cart_page %}
+  {{ attach_library('core/drupal.ajax') }}
+  <section class="mx-auto max-w-5xl space-y-8" data-sangel-core-placeholder="{{ identifier }}">
+    <header class="flex flex-col gap-2 text-center">
+      <p class="text-sm uppercase tracking-[0.3em] text-sangel-primary/70">{{ 'Mon panier'|t }}</p>
+      <h1 class="text-3xl font-bold text-sangel-primary">{{ title }}</h1>
+      <p class="text-sm text-sangel-text/70">{{ 'Retrouvez ici votre sélection de produits avant validation.'|t }}</p>
+    </header>
+
+    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div class="space-y-4">
+        {% if cart_items %}
+          <ul class="space-y-4">
+            {% for item in cart_items %}
+              <li id="{{ item.id }}" class="flex flex-col gap-4 rounded-2xl border border-sangel-ice-strong bg-white p-5 shadow-sm transition hover:shadow-md lg:flex-row">
+                <div class="flex h-28 w-full items-center justify-center overflow-hidden rounded-xl bg-sangel-ice lg:h-28 lg:w-32">
+                  {% if item.image_url %}
+                    <img src="{{ item.image_url }}" alt="{{ item.title }}" class="h-full w-full object-cover" loading="lazy">
+                  {% else %}
+                    <span class="text-xs font-semibold uppercase tracking-wider text-sangel-text/40">{{ 'Aperçu'|t }}</span>
+                  {% endif %}
+                </div>
+                <div class="flex flex-1 flex-col gap-3">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div class="space-y-1">
+                      <h3 class="text-lg font-semibold text-sangel-text">
+                        {% if item.product_url %}
+                          <a href="{{ item.product_url }}" class="hover:text-sangel-primary">{{ item.title }}</a>
+                        {% else %}
+                          {{ item.title }}
+                        {% endif %}
+                      </h3>
+                      {% if item.sku %}
+                        <p class="text-xs uppercase tracking-wide text-sangel-text/50">{{ 'Réf. : @sku'|t({'@sku': item.sku}) }}</p>
+                      {% endif %}
+                      <div class="flex flex-wrap items-center gap-4 text-sm text-sangel-text/70">
+                        <span>{{ 'Quantité : @qty'|t({'@qty': item.quantity}) }}</span>
+                        <span>{{ 'Prix unitaire :'|t }} {{ item.unit_price }}&nbsp;F&nbsp;CFA</span>
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <span class="block text-xs uppercase tracking-widest text-sangel-text/50">{{ 'Total'|t }}</span>
+                      <span class="text-xl font-semibold text-sangel-primary">{{ item.line_total }}&nbsp;F&nbsp;CFA</span>
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-end">
+                    <a href="{{ item.remove_url }}" class="use-ajax inline-flex items-center gap-2 rounded-full border border-red-100 px-4 py-2 text-sm font-semibold text-red-500 transition hover:border-red-400 hover:text-red-600" data-remove-target="#{{ item.id }}">
+                      <span aria-hidden="true">✕</span>
+                      <span>{{ 'Retirer'|t }}</span>
+                    </a>
+                  </div>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="rounded-3xl border border-dashed border-sangel-ice bg-white/60 p-12 text-center shadow-sm">
+            <h2 class="text-xl font-semibold text-sangel-text/80">{{ 'Votre panier est vide'|t }}</h2>
+            <p class="mt-2 text-sm text-sangel-text/60">{{ 'Parcourez nos catalogues pour ajouter vos premiers produits.'|t }}</p>
+            <div class="mt-6 inline-flex">
+              <a href="{{ cart_empty_cta_url }}" class="inline-flex items-center justify-center rounded-full bg-sangel-primary px-6 py-3 text-sm font-semibold text-white shadow hover:bg-sangel-primary/90">{{ 'Découvrir les catalogues'|t }}</a>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      <aside class="space-y-4">
+        <div class="rounded-2xl border border-sangel-ice-strong bg-white p-6 shadow-sm">
+          <h2 class="text-lg font-semibold text-sangel-text">{{ 'Récapitulatif'|t }}</h2>
+          <dl class="mt-4 space-y-3 text-sm">
+            <div class="flex items-center justify-between">
+              <dt class="text-sangel-text/70">{{ 'Articles'|t }}</dt>
+              <dd class="font-semibold text-sangel-text" data-cart-summary-count>{{ cart_item_count }}</dd>
+            </div>
+            <div class="flex items-center justify-between">
+              <dt class="text-sangel-text/70">{{ 'Total HT'|t }}</dt>
+              <dd class="text-2xl font-semibold text-sangel-primary" data-cart-summary-total>{{ cart_total }}&nbsp;F&nbsp;CFA</dd>
+            </div>
+          </dl>
+          <div class="mt-6 flex flex-col gap-3" data-cart-summary-checkout>
+            {% if cart_can_checkout %}
+              <a href="{{ cart_checkout_url }}" class="inline-flex items-center justify-center rounded-full bg-sangel-primary px-6 py-3 text-sm font-semibold text-white shadow hover:bg-sangel-primary/90">{{ 'Valider ma commande'|t }}</a>
+            {% elseif not cart_is_empty %}
+              <a href="{{ cart_checkout_url }}" class="inline-flex items-center justify-center rounded-full border border-sangel-primary px-6 py-3 text-sm font-semibold text-sangel-primary shadow hover:bg-sangel-primary/10">{{ 'Me connecter pour finaliser'|t }}</a>
+            {% else %}
+              <span class="inline-flex cursor-not-allowed items-center justify-center rounded-full bg-sangel-ice px-6 py-3 text-sm font-semibold text-sangel-text/50">{{ 'Valider ma commande'|t }}</span>
+            {% endif %}
+            <a href="{{ cart_continue_url }}" class="inline-flex items-center justify-center rounded-full border border-sangel-primary px-6 py-3 text-sm font-semibold text-sangel-primary transition hover:bg-sangel-primary/10">{{ 'Continuer mes achats'|t }}</a>
+          </div>
+        </div>
+        <div class="rounded-2xl border border-sangel-ice bg-white p-6 text-sm text-sangel-text/70 shadow-sm">
+          <h3 class="text-sm font-semibold uppercase tracking-widest text-sangel-text/60">{{ 'Informations'|t }}</h3>
+          <ul class="mt-3 space-y-2 list-disc list-inside">
+            <li>{{ 'Les prix indiqués sont hors frais de livraison.'|t }}</li>
+            <li>{{ 'Vous pourrez confirmer vos quantités lors de la validation.'|t }}</li>
+            <li>{{ 'Besoin d’aide ? Contactez votre conseiller commercial.'|t }}</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </section>
+{% elseif is_manage_clients_page %}
+  {% include '@sangelpro_theme/page/gestion/includes/__clients-dashboard.html.twig' with {
+    identifier: identifier,
+    title: title,
+    clients: clients,
+    clients_summary: clients_summary,
+    client_type_filters: client_type_filters,
+    create_client_url: create_client_url,
+    import_feed_url: import_feed_url,
+    catalog_overview_url: catalog_overview_url,
+    selected_client: selected_client
+  } %}
+{% else %}
+  <div class="sangel-core-placeholder" data-sangel-core-placeholder="{{ identifier }}">
+    <div class="sangel-core-placeholder__inner">
+      {% if title %}
+        <h1 class="sangel-core-placeholder__title">{{ title }}</h1>
+      {% endif %}
+      <div class="sangel-core-placeholder__body">
+        <p>{{ 'Cette page sera bientôt disponible.'|t }}</p>
+      </div>
+    </div>
+  </div>
+{% endif %}

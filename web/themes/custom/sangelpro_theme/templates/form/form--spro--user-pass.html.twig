@@ -1,0 +1,22 @@
+{% set attrs = (attributes is defined ? attributes : create_attribute()).addClass('auth-shell__form') %}
+
+<form{{ attrs }}>
+  {{ element.form_build_id }}
+  {{ element.form_token }}
+  {{ element.form_id }}
+
+  {% if element.name is defined %}
+    <div class="auth-shell__field">
+      {{ element.name }}
+    </div>
+  {% endif %}
+
+  {% if element.actions is defined %}
+    <div class="auth-shell__actions">
+      {{ element.actions }}
+      <a href="{{ path('user.login') }}" class="auth-shell__link auth-shell__link--back">
+        {{ 'Back to login'|t }}
+      </a>
+    </div>
+  {% endif %}
+</form>

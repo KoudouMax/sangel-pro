@@ -1,0 +1,14 @@
+services:
+  kint.event_subscriber:
+    class: Drupal\kint\KintEventSubscriber
+    tags:
+      - { name: 'event_subscriber' }
+    arguments:
+      - '@current_user'
+      - '@?config.factory'
+
+  kint.twig_extension:
+    class: Kint\Twig\TwigExtension
+    factory: ['Drupal\kint\TwigExtensionFactory', 'create']
+    tags:
+      - { name: 'twig.extension' }

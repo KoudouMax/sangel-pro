@@ -1,0 +1,565 @@
+<?php
+
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Field\FieldItemListInterface;
+use Drupal\Core\Render\Element;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Template\Attribute;
+use Drupal\Core\Url;
+use Drupal\feeds\FeedInterface;
+use Drupal\node\Entity\Node;
+use Drupal\node\NodeInterface;
+use Drupal\views\Plugin\views\query\Sql;
+use Drupal\views\ViewExecutable;
+
+/**
+ * Implements hook_entity_presave().
+ */
+function sangel_catalog_entity_presave(EntityInterface $entity): void {
+  if (!$entity instanceof NodeInterface || $entity->bundle() !== 'catalog') {
+    return;
+  }
+
+  $owner_id = (int) $entity->getOwnerId();
+  if ($owner_id <= 0) {
+    return;
+  }
+
+  $assigned = [];
+  foreach ($entity->get('field_catalog_clients') as $item) {
+    if ($item->target_id) {
+      $assigned[(int) $item->target_id] = TRUE;
+    }
+  }
+
+  if (!isset($assigned[$owner_id])) {
+    $entity->get('field_catalog_clients')->appendItem($owner_id);
+  }
+}
+
+/**
+ * Implements hook_node_access().
+ */
+function sangel_catalog_node_access(NodeInterface $node, $op, AccountInterface $account): AccessResult {
+  if ($node->bundle() !== 'catalog') {
+    return AccessResult::neutral();
+  }
+
+  if ($account->hasPermission('view all sangel catalogs')) {
+    return AccessResult::allowed()->cachePerPermissions();
+  }
+
+  if ($op === 'view') {
+    if (!$node->isPublished() && $node->getOwnerId() !== $account->id()) {
+      return AccessResult::forbidden()->cachePerPermissions()->cachePerUser();
+    }
+
+    if (sangel_catalog_is_assigned($node, $account)) {
+      return AccessResult::allowed()->cachePerUser();
+    }
+
+    return AccessResult::forbidden()->cachePerUser();
+  }
+
+  return AccessResult::neutral();
+}
+
+/**
+ * Implements hook_theme().
+ */
+function sangel_catalog_theme($existing, $type, $theme, $path): array {
+  return [
+    'sangel_catalog_products' => [
+      'render element' => 'element',
+      'template' => 'sangel-catalog-products',
+    ],
+    'sangel_catalog_product' => [
+      'render element' => 'element',
+      'template' => 'sangel-catalog-product',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_node_view().
+ */
+function sangel_catalog_node_view(array &$build, NodeInterface $node, $view_mode, $langcode): void {
+  if ($node->bundle() !== 'catalog') {
+    return;
+  }
+
+  if ($node->access('update')) {
+    $build['sangel_catalog_products'] = [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['sangel-catalog-products-wrapper']],
+      '#weight' => 50,
+      'form' => \Drupal::formBuilder()->getForm(\Drupal\sangel_catalog\Form\CatalogProductsForm::class, $node),
+    ];
+  }
+
+  $account = \Drupal::currentUser();
+  if (!$account->hasPermission('export sangel catalogs')) {
+    return;
+  }
+
+  if (!sangel_catalog_is_assigned($node, $account) && !$account->hasPermission('view all sangel catalogs')) {
+    return;
+  }
+
+  $build['sangel_catalog_export'] = [
+    '#type' => 'link',
+    '#title' => t('Export catalog (CSV)'),
+    '#url' => Url::fromRoute('sangel_catalog.export', ['node' => $node->id()]),
+    '#attributes' => [
+      'class' => ['button', 'button--small', 'sangel-catalog-export'],
+    ],
+    '#weight' => 100,
+  ];
+}
+
+/**
+ * Prepares variables for the catalog products list template.
+ */
+function template_preprocess_sangel_catalog_products(array &$variables): void {
+  $element = $variables['element'];
+  $variables['attributes'] = new Attribute($element['#attributes'] ?? []);
+  $variables['items'] = [];
+
+  foreach (Element::children($element) as $child) {
+    $variables['items'][] = $element[$child];
+  }
+
+  $variables['empty_message'] = $element['#empty_message'] ?? NULL;
+}
+
+/**
+ * Prepares variables for a single catalog product row.
+ */
+function template_preprocess_sangel_catalog_product(array &$variables): void {
+  $element = $variables['element'];
+  $variables['attributes'] = new Attribute($element['#attributes'] ?? []);
+  $variables['title'] = $element['title'] ?? [];
+  $variables['client_type'] = $element['client_type'] ?? [];
+  $variables['price'] = $element['price'] ?? [];
+  $variables['actions'] = $element['actions'] ?? [];
+}
+
+/**
+ * Helper to determine whether an account is associated with a catalog.
+ */
+function sangel_catalog_is_assigned(NodeInterface $node, AccountInterface $account): bool {
+  if ((int) $node->getOwnerId() === (int) $account->id()) {
+    return TRUE;
+  }
+
+  foreach ($node->get('field_catalog_clients') as $item) {
+    if ($item->target_id && (int) $item->target_id === (int) $account->id()) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * Implements hook_entity_insert().
+ */
+function sangel_catalog_entity_insert(EntityInterface $entity): void {
+  if ($entity instanceof FeedInterface && $entity->bundle() === 'catalog_products_csv') {
+    sangel_catalog_sync_catalog_from_feed($entity);
+  }
+}
+
+/**
+ * Implements hook_entity_update().
+ */
+function sangel_catalog_entity_update(EntityInterface $entity): void {
+  if ($entity instanceof FeedInterface && $entity->bundle() === 'catalog_products_csv') {
+    sangel_catalog_sync_catalog_from_feed($entity);
+  }
+}
+
+/**
+ * Ensures a catalog node exists and mirrors the feed metadata.
+ */
+function sangel_catalog_sync_catalog_from_feed(FeedInterface $feed): void {
+  $state = \Drupal::state();
+  $storage = \Drupal::entityTypeManager()->getStorage('node');
+  $state_key = 'sangel_catalog.catalog_for_feed.' . $feed->uuid();
+
+  $catalog = NULL;
+  $catalog_id = (int) $state->get($state_key);
+  if ($catalog_id > 0) {
+    $catalog = $storage->load($catalog_id);
+  }
+
+  $client = sangel_catalog_get_feed_client($feed);
+  if ($client instanceof NodeInterface) {
+    $state->set('sangel_catalog.feed_client.' . $feed->uuid(), $client->id());
+  }
+  if ($client instanceof NodeInterface) {
+    $client_catalog = sangel_catalog_load_client_catalog($client);
+    if ($client_catalog instanceof NodeInterface) {
+      $catalog = $client_catalog;
+    }
+  }
+
+  if (!$catalog instanceof NodeInterface || $catalog->bundle() !== 'catalog') {
+    $owner_id = (int) ($feed->getOwnerId() ?: \Drupal::currentUser()->id());
+    $catalog = Node::create([
+      'type' => 'catalog',
+      'title' => $feed->label() ?: t('Catalogue import @id', ['@id' => $feed->id()]),
+      'uid' => $owner_id > 0 ? $owner_id : \Drupal::currentUser()->id(),
+      'status' => NodeInterface::PUBLISHED,
+    ]);
+
+    if ($catalog->hasField('field_custom')) {
+      $catalog->set('field_custom', 0);
+    }
+  }
+
+  $owner_id = (int) ($feed->getOwnerId() ?: \Drupal::currentUser()->id());
+  if ($owner_id > 0) {
+    $catalog->setOwnerId($owner_id);
+  }
+  $catalog->setTitle($feed->label() ?: $catalog->label());
+  $catalog->setPublished(TRUE);
+
+  if ($client instanceof NodeInterface && $catalog->hasField('field_client')) {
+    $catalog->set('field_client', $client->id());
+  }
+
+  if ($client instanceof NodeInterface && $catalog->hasField('field_catalog_clients')) {
+    $owner_uid = (int) $client->getOwnerId();
+    if ($owner_uid > 0) {
+      $assigned = [];
+      foreach ($catalog->get('field_catalog_clients') as $item) {
+        if ($item->target_id) {
+          $assigned[(int) $item->target_id] = (int) $item->target_id;
+        }
+      }
+
+      if (!isset($assigned[$owner_uid])) {
+        $assigned[$owner_uid] = $owner_uid;
+        $catalog->set('field_catalog_clients', array_map(static fn(int $id): array => ['target_id' => $id], array_values($assigned)));
+      }
+    }
+  }
+
+  $client_type_tid = sangel_catalog_get_feed_client_type_tid($feed);
+  if (!$client_type_tid && $client instanceof NodeInterface && $client->hasField('field_client_type')) {
+    $client_type_field = $client->get('field_client_type');
+    if (!$client_type_field->isEmpty() && !empty($client_type_field->target_id)) {
+      $client_type_tid = (int) $client_type_field->target_id;
+    }
+  }
+
+  if ($client_type_tid && $catalog->hasField('field_client_type')) {
+    $catalog->set('field_client_type', ['target_id' => $client_type_tid]);
+  }
+
+  foreach ($feed->getFields() as $field_name => $field) {
+    if (!str_starts_with($field_name, 'field_cover')) {
+      continue;
+    }
+    if (!$catalog->hasField($field_name)) {
+      continue;
+    }
+    if ($field instanceof FieldItemListInterface) {
+      sangel_catalog_copy_field_values($field, $catalog->get($field_name));
+    }
+  }
+
+  try {
+    $catalog->save();
+    $state->set($state_key, $catalog->id());
+  }
+  catch (\Exception $exception) {
+    \Drupal::logger('sangel_catalog')->error('Failed to synchronize catalog for feed @feed: @message', [
+      '@feed' => $feed->label() ?: $feed->id(),
+      '@message' => $exception->getMessage(),
+    ]);
+  }
+}
+
+/**
+ * Extracts the client type term ID from a feed.
+ */
+function sangel_catalog_get_feed_client_type_tid(FeedInterface $feed): ?int {
+  foreach (['field_client_types', 'field_client_type'] as $field_name) {
+    if (!$feed->hasField($field_name)) {
+      continue;
+    }
+    $list = $feed->get($field_name);
+    if ($list->isEmpty()) {
+      continue;
+    }
+
+    $tid = sangel_catalog_extract_tid_from_field($list);
+    if ($tid) {
+      return $tid;
+    }
+  }
+
+  return NULL;
+}
+
+/**
+ * Extracts a taxonomy term id from a field list.
+ */
+function sangel_catalog_extract_tid_from_field(FieldItemListInterface $list): ?int {
+  $item = $list->first();
+  if (!$item) {
+    return NULL;
+  }
+
+  if (!empty($item->target_id)) {
+    return (int) $item->target_id;
+  }
+
+  $value = $item->value ?? NULL;
+  if (!$value) {
+    return NULL;
+  }
+
+  $terms = \Drupal::entityTypeManager()
+    ->getStorage('taxonomy_term')
+    ->loadByProperties([
+      'vid' => 'client_type',
+      'name' => $value,
+    ]);
+  if (!$terms) {
+    return NULL;
+  }
+
+  $term = reset($terms);
+  return $term ? (int) $term->id() : NULL;
+}
+
+/**
+ * Copies values from one field list to another while respecting cardinality.
+ */
+function sangel_catalog_copy_field_values(FieldItemListInterface $source, FieldItemListInterface $target): void {
+  if ($source->isEmpty()) {
+    return;
+  }
+
+  $values = $source->getValue();
+  if ($values === []) {
+    return;
+  }
+
+  $cardinality = $target->getFieldDefinition()->getFieldStorageDefinition()->getCardinality();
+  if ($cardinality === 1) {
+    $target->setValue(reset($values));
+    return;
+  }
+
+  $target->setValue($values);
+}
+
+/**
+ * Returns the client referenced by the feed if available.
+ */
+function sangel_catalog_get_feed_client(FeedInterface $feed): ?NodeInterface {
+  if (!$feed->hasField('field_client')) {
+    return NULL;
+  }
+
+  $field = $feed->get('field_client');
+  if (!$field instanceof FieldItemListInterface || $field->isEmpty()) {
+    return NULL;
+  }
+
+  $item = $field->first();
+  if (!$item) {
+    return NULL;
+  }
+
+  if (!empty($item->entity) && $item->entity instanceof NodeInterface) {
+    return $item->entity;
+  }
+
+  if (!empty($item->target_id)) {
+    $node = \Drupal::entityTypeManager()->getStorage('node')->load((int) $item->target_id);
+    return $node instanceof NodeInterface ? $node : NULL;
+  }
+
+  $stored_id = (int) \Drupal::state()->get('sangel_catalog.feed_client.' . $feed->uuid(), 0);
+  if ($stored_id > 0) {
+    $node = \Drupal::entityTypeManager()->getStorage('node')->load($stored_id);
+    if ($node instanceof NodeInterface) {
+      return $node;
+    }
+    \Drupal::state()->delete('sangel_catalog.feed_client.' . $feed->uuid());
+  }
+
+  return NULL;
+}
+
+/**
+ * Loads the catalog associated with a client node.
+ */
+function sangel_catalog_load_client_catalog(NodeInterface $client): ?NodeInterface {
+  $storage = \Drupal::entityTypeManager()->getStorage('node');
+  $query = $storage->getQuery()
+    ->condition('type', 'catalog')
+    ->condition('status', 1)
+    ->condition('field_client', $client->id())
+    ->range(0, 1)
+    ->accessCheck(FALSE);
+
+  $definitions = \Drupal::service('entity_field.manager')->getFieldDefinitions('node', 'catalog');
+  if (isset($definitions['field_custom'])) {
+    $query->condition('field_custom', 1);
+  }
+
+  $ids = $query->execute();
+  if (!$ids) {
+    return NULL;
+  }
+
+  $catalog = $storage->load(reset($ids));
+  return $catalog instanceof NodeInterface ? $catalog : NULL;
+}
+
+/**
+ * Implements hook_views_query_alter().
+ */
+function sangel_catalog_views_query_alter(ViewExecutable $view, Sql $query): void {
+  if ($view->id() !== 'home_catalog' || $view->current_display !== 'listings') {
+    return;
+  }
+
+  $account = \Drupal::currentUser();
+  if (!$account->isAuthenticated()) {
+    $query->addWhereExpression(0, '1 = 0');
+    return;
+  }
+
+  // if ($account->hasPermission('view all sangel catalogs')) {
+  //   return;
+  // }
+
+  $allowed_terms = [];
+
+  // Commercial users can always access the "General" catalog type.
+  if (in_array('commercial', $account->getRoles(), TRUE)) {
+    $term_storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
+    $general_terms = $term_storage->loadByProperties([
+      'vid' => 'client_type',
+      'name' => 'General',
+    ]);
+    if ($general_term = reset($general_terms)) {
+      $allowed_terms[] = (int) $general_term->id();
+    }
+  }
+
+  /** @var \Drupal\node\NodeStorageInterface $storage */
+  $storage = \Drupal::entityTypeManager()->getStorage('node');
+  $client_query = $storage->getQuery()
+    ->condition('type', 'client')
+    ->condition('status', 1)
+    ->condition('field_user', $account->id())
+    ->accessCheck(FALSE);
+
+  $client_ids = $client_query->execute();
+  if ($client_ids) {
+    $clients = $storage->loadMultiple($client_ids);
+    foreach ($clients as $client) {
+      if ($client instanceof NodeInterface && $client->hasField('field_client_type') && !$client->get('field_client_type')->isEmpty()) {
+        foreach ($client->get('field_client_type') as $item) {
+          if (!empty($item->target_id)) {
+            $allowed_terms[] = (int) $item->target_id;
+          }
+        }
+      }
+    }
+  }
+
+  $allowed_terms = array_unique(array_filter($allowed_terms));
+  if (!$allowed_terms) {
+    $query->addWhereExpression(0, '1 = 0');
+    return;
+  }
+
+  $alias = $query->ensureTable('node__field_client_type');
+  if (count($allowed_terms) === 1) {
+    $query->addWhere('AND', "$alias.field_client_type_target_id", reset($allowed_terms));
+  }
+  else {
+    $query->addWhere('AND', "$alias.field_client_type_target_id", $allowed_terms, 'IN');
+  }
+}
+
+/**
+ * Implements hook_views_data().
+ */
+function sangel_catalog_views_data(): array {
+  $data = [];
+
+  $data['node_field_data']['catalog_product_teasers'] = [
+    'title' => t('Catalogue products'),
+    'help' => t('Displays the products stored in the catalogue JSON field.'),
+    'field' => [
+      'id' => 'catalog_product_teasers',
+      'click sortable' => FALSE,
+    ],
+  ];
+
+  $data['node_field_data']['sangel_catalog_product'] = [
+    'title' => t('Catalog product assignments'),
+    'help' => t('Joins catalog nodes with their product mapping records.'),
+    'relationship' => [
+      'id' => 'standard',
+      'base' => 'sangel_catalog_product',
+      'base field' => 'catalog_nid',
+      'relationship field' => 'nid',
+      'label' => t('Catalog product mapping'),
+    ],
+  ];
+
+  $data['sangel_catalog_product']['table'] = [
+    'group' => t('Sangel catalog'),
+    'provider' => 'sangel_catalog',
+    'base' => [
+      'field' => 'id',
+      'title' => t('Catalog product mapping'),
+      'help' => t('Records linking catalog nodes to product nodes.'),
+    ],
+    'join' => [
+      'node_field_data' => [
+        'left_field' => 'nid',
+        'field' => 'catalog_nid',
+      ],
+    ],
+  ];
+
+  $data['sangel_catalog_product']['product'] = [
+    'title' => t('Product'),
+    'help' => t('Relate each catalog record to its product node.'),
+    'relationship' => [
+      'id' => 'standard',
+      'base' => 'node_field_data',
+      'base field' => 'nid',
+      'relationship field' => 'product_nid',
+      'entity type' => 'node',
+      'label' => t('Product'),
+    ],
+  ];
+
+  $data['sangel_catalog_product']['weight'] = [
+    'title' => t('Weight'),
+    'help' => t('Ordering weight of the product within the catalog.'),
+    'field' => [
+      'id' => 'numeric',
+      'click sortable' => TRUE,
+    ],
+    'sort' => [
+      'id' => 'standard',
+    ],
+  ];
+
+  return $data;
+}

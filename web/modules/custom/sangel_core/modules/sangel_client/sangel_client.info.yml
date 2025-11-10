@@ -1,0 +1,11 @@
+name: Sangel Client
+type: module
+description: "Provides the Client content type and related fields."
+package: Sangel
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:node
+  - drupal:taxonomy
+  - drupal:views
+  - drupal:menu_ui
+  - sangel_core:sangel_core

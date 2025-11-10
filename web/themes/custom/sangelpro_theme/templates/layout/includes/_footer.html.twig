@@ -1,0 +1,17 @@
+{#
+  Shared footer wrapper for SangelPro layouts.
+#}
+<footer class="mt-auto bg-sangel-primary text-white">
+  {% if page.footer_primary %}
+    <div class="mx-auto max-w-7xl px-4 py-8">
+      {{ page.footer_primary }}
+    </div>
+  {% endif %}
+  {% if page.footer_secondary %}
+    <div class="bg-sangel-primary-dark">
+      <div class="mx-auto max-w-7xl px-4 py-4 text-sm text-white/70">
+        {{ page.footer_secondary }}
+      </div>
+    </div>
+  {% endif %}
+</footer>

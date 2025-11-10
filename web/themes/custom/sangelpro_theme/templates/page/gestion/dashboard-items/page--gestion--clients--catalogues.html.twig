@@ -1,0 +1,28 @@
+{% set summary = gestion_client_summary ?? {} %}
+{% set owner_id = gestion_client_owner_id ?? null %}
+{% set owner_argument = gestion_client_owner_argument ?? null %}
+{% if owner_argument is iterable %}
+  {% set owner_argument = owner_argument|first %}
+{% endif %}
+{% if owner_argument is not same as(null) %}
+  {% set owner_argument = owner_argument ~ '' %}
+{% endif %}
+
+{% set export_arguments = owner_argument is not same as(null) and owner_argument != '' ? {0: owner_argument} : {} %}
+{% set export_route_options = export_arguments ? {'query': {'arguments_json': export_arguments|json_encode}} : {} %}
+
+{% embed '@sangelpro_theme/layout/page--gestion.html.twig'
+    with {
+      print_label: 'Exporter le catalogue du client'|t,
+      view_id: 'product_catalog',
+      display_id: 'viewer_commercial_client_catalog',
+      arguments: export_arguments,
+      export_route_options: export_route_options
+    }
+  %}
+
+	{% block content %}
+		{{ drupal_view('product_catalog', 'viewer_commercial_client_catalog', owner_argument is not null ? owner_argument : '') }}
+	{% endblock %}
+
+{% endembed %}

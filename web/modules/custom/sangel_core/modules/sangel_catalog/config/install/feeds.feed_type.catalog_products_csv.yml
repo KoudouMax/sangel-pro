@@ -1,0 +1,120 @@
+uuid: 7cf409ed-e561-480b-9179-6806f71d4595
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.product.field_client_type
+    - field.field.node.product.field_description
+    - field.field.node.product.field_family
+    - field.field.node.product.field_image_url
+    - field.field.node.product.field_origin
+    - field.field.node.product.field_price
+    - field.field.node.product.field_sku
+    - field.field.node.product.field_sub_family
+    - node.type.product
+    - taxonomy.vocabulary.client_type
+    - taxonomy.vocabulary.product_family
+    - taxonomy.vocabulary.product_sub_family
+  module:
+    - feeds
+    - node
+    - taxonomy
+    - text
+id: catalog_products_csv
+label: "Catalog products CSV"
+description: "Imports product nodes with catalog-specific fields."
+help: "Upload a CSV file containing columns: FAMILLE;SOUS-FAMILLE;REFERENCE;DESIGNATION_ARTICLE;CONDITIONNEMENT;UNITE;IMAGE;PRICE;ORIGINE."
+import_period: -1
+fetcher: upload
+fetcher_configuration:
+  allowed_extensions: "csv"
+  directory: "private://feeds"
+parser: csv
+parser_configuration:
+  delimiter: ";"
+  enclosure: '"'
+  escape: '\\'
+  no_headers: false
+  line_limit: 0
+processor: "entity:node"
+processor_configuration:
+  langcode: und
+  insert_new: 1
+  update_existing: 1
+  update_non_existent: _keep
+  expire: -1
+  owner_feed_author: false
+  owner_id: 0
+  authorize: true
+  skip_hash_check: false
+  values:
+    type: product
+custom_sources:
+  family:
+    label: "FAMILLE"
+    value: FAMILLE
+    machine_name: famille
+  image_url:
+    label: "IMAGE"
+    value: IMAGE
+    machine_name: image
+  origin:
+    label: "ORIGINE"
+    value: ORIGINE
+    machine_name: origine
+  price:
+    label: "PRICE"
+    value: PRICE
+    machine_name: price
+  sku:
+    label: "REFERENCE"
+    value: REFERENCE
+    machine_name: reference
+  sub_family:
+    label: "SOUS-FAMILLE"
+    value: SOUS-FAMILLE
+    machine_name: sous_famille
+  title:
+    label: "DESIGNATION_ARTICLE"
+    value: DESIGNATION_ARTICLE
+    machine_name: designation_article
+mappings:
+  - target: title
+    map:
+      value: DESIGNATION_ARTICLE
+    unique: {  }
+    settings:
+      language: null
+  - target: field_sku
+    map:
+      value: REFERENCE
+    unique:
+      value: REFERENCE
+    settings: {  }
+  - target: field_family
+    map:
+      target_id: FAMILLE
+    settings:
+      reference_by: name
+      autocreate: true
+      autocreate_bundle: product_family
+  - target: field_sub_family
+    map:
+      target_id: SOUS-FAMILLE
+    settings:
+      reference_by: name
+      autocreate: true
+      autocreate_bundle: product_sub_family
+  - target: field_price
+    map:
+      value: PRICE
+    settings: {  }
+  - target: field_origin
+    map:
+      value: ORIGINE
+    settings: {  }
+  - target: field_image_url
+    map:
+      value: IMAGE
+    settings:
+      max_length: 2048

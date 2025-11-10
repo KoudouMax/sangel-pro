@@ -1,0 +1,97 @@
+{# Teaser pour les nœuds export #}
+
+{% set file_entity = node.field_export_file is defined and node.field_export_file.entity ? node.field_export_file.entity : null %}
+{% if not file_entity and node.hasField('field_export_file') and node.get('field_export_file') is iterable %}
+  {% for item in node.get('field_export_file') %}
+    {% if item.entity %}
+      {% set file_entity = item.entity %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% set catalog = node.hasField('field_export_catalog') and node.get('field_export_catalog').entity ? node.get('field_export_catalog').entity : null %}
+{% set catalog_label = catalog ? catalog.label() : '' %}
+
+{% set fallback_export_url = (catalog and catalog.id) ? path('sangel_catalog.export', {'node': catalog.id}) : '' %}
+{% set export_url = file_entity ? file_url(file_entity.getFileUri()) : fallback_export_url %}
+{% set detail_url = path('entity.node.canonical', {'node': node.id()}) %}
+
+{% set product_count = node.hasField('field_export_products') ? node.get('field_export_products')|length : 0 %}
+{% set created_timestamp = node.getCreatedTime ? node.getCreatedTime() : 0 %}
+{% set created_formatted = created_timestamp ? created_timestamp|date('d/m/Y H:i') : '' %}
+
+{% set export_filename = file_entity ? file_entity.getFilename() : '' %}
+{% set export_mime = file_entity and file_entity.getMimeType() ? file_entity.getMimeType() : '' %}
+{% set export_size = file_entity and file_entity.getSize() ? file_entity.getSize() : 0 %}
+
+{% set size_label = '—' %}
+{% if export_size %}
+  {% if export_size >= 1048576 %}
+    {% set size_label = (export_size / 1048576)|number_format(2, ',', ' ') ~ '&nbsp;Mo' %}
+  {% else %}
+    {% set size_label = (export_size / 1024)|number_format(1, ',', ' ') ~ '&nbsp;Ko' %}
+  {% endif %}
+{% endif %}
+
+{% set format_map = {
+  'text/csv': 'CSV',
+  'text/plain': 'TXT',
+  'application/json': 'JSON',
+  'application/xml': 'XML',
+  'text/xml': 'XML',
+  'application/vnd.ms-excel': 'XLS',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'XLSX',
+} %}
+{% set export_format = export_mime ? format_map[export_mime]|default(export_mime) : (export_url ? export_url|split('.')|last|upper : '—') %}
+
+<article{{ attributes.addClass('flex', 'flex-col', 'gap-3', 'rounded-2xl', 'border', 'border-sangel-ice-strong', 'bg-white', 'px-4', 'py-2', 'shadow-sm', 'transition', 'hover:border-sangel-primary/40', 'hover:shadow-md', 'mb-2') }}>
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex flex-col gap-1">
+      <h3 class="text-sm font-semibold text-sangel-text">
+        <a href="{{ detail_url }}" class="transition hover:text-sangel-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sangel-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white">
+          {{ label }}
+        </a>
+      </h3>
+      {% if created_formatted %}
+        <time datetime="{{ created_timestamp ? created_timestamp|date('c') : '' }}" class="text-xs uppercase text-sangel-text/45">
+          {{ created_formatted }}
+        </time>
+      {% endif %}
+    </div>
+
+    <div class="flex items-center gap-2">
+      {% if export_url %}
+        <a href="{{ export_url }}" class="hidden items-center gap-1 rounded-full border border-dashed border-sangel-primary px-3 py-1 text-[0.5rem] font-semibold text-sangel-primary transition hover:bg-sangel-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sangel-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:inline-flex">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M7.5 11.25 12 15.75m0 0 4.5-4.5M12 15.75V3"/>
+          </svg>
+          {{ 'Telecharger'|t }}
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="flex flex-wrap items-center gap-4 text-xs text-sangel-text/60">
+    <span class="inline-flex items-center gap-1">
+      <span class="font-semibold text-sangel-text/40">{{ 'Catalogue'|t }}:</span>
+      <span class="font-semibold text-sangel-text/70">{{ catalog_label ?: '—' }}</span>
+    </span>
+    <span>|</span>
+    <span class="inline-flex items-center gap-1">
+      <span class="font-semibold text-sangel-text/40">{{ 'Format'|t }}:</span>
+      <span class="font-semibold text-sangel-text/70">{{ export_format }}</span>
+    </span>
+    <span>|</span>
+    <span class="inline-flex items-center gap-1">
+      <span class="font-semibold text-sangel-text/40">{{ 'Taille'|t }}:</span>
+      <span class="font-semibold text-sangel-text/70">{{ size_label|raw }}</span>
+    </span>
+    {% if export_filename %}
+      <span>|</span>
+      <span class="inline-flex items-center gap-1 text-ellipsis whitespace-nowrap">
+        <span class="font-semibold text-sangel-text/40">{{ 'Fichier'|t }}:</span>
+        <span class="font-semibold text-sangel-text/70">{{ export_filename }}</span>
+      </span>
+    {% endif %}
+  </div>
+</article>

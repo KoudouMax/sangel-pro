@@ -1,0 +1,82 @@
+{#
+  Tableau stylisé pour SangelPro.
+  Inspiré du template core mais enrichi avec classes utilitaires.
+#}
+
+{% set table_classes = [
+  'sangel-table',
+  sticky ? 'sangel-table--sticky'
+] %}
+
+<div class="sangel-table__wrapper overflow-x-auto">
+  <table{{ attributes.addClass(table_classes|filter(value => value)) }}>
+    {% if caption %}
+      <caption class="sangel-table__caption">{{ caption }}</caption>
+    {% endif %}
+
+    {% for colgroup in colgroups %}
+      {% if colgroup.cols %}
+        <colgroup{{ colgroup.attributes }}>
+          {% for col in colgroup.cols %}
+            <col{{ col.attributes }} />
+          {% endfor %}
+        </colgroup>
+      {% else %}
+        <colgroup{{ colgroup.attributes }} />
+      {% endif %}
+    {% endfor %}
+
+    {% if header %}
+      <thead class="sangel-table__head">
+        <tr>
+          {% for cell in header %}
+            <{{ cell.tag }}{{ cell.attributes.addClass('sangel-table__header-cell') }}>
+              <span class="sangel-table__header-label">{{ cell.content }}</span>
+              {% if cell.sort %}
+                <span class="sangel-table__sort-indicator" aria-hidden="true">
+                  {{ cell.sort == 'asc' ? '↑' : '↓' }}
+                </span>
+              {% endif %}
+            </{{ cell.tag }}>
+          {% endfor %}
+        </tr>
+      </thead>
+    {% endif %}
+
+    {% if rows %}
+      <tbody class="sangel-table__body">
+        {% for row in rows %}
+          <tr{{ row.attributes.addClass(loop.children ? 'sangel-table__row--group' : '') }}>
+            {% for cell in row.cells %}
+              <{{ cell.tag }}{{ cell.attributes.addClass('sangel-table__cell') }}>
+                {{ cell.content }}
+              </{{ cell.tag }}>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    {% elseif empty %}
+      <tbody class="sangel-table__body">
+        <tr class="sangel-table__row--empty">
+          <td class="sangel-table__cell text-center text-sangel-text/60" colspan="{{ header_columns }}">
+            {{ empty }}
+          </td>
+        </tr>
+      </tbody>
+    {% endif %}
+
+    {% if footer %}
+      <tfoot class="sangel-table__foot">
+        {% for row in footer %}
+          <tr{{ row.attributes.addClass('sangel-table__row--footer') }}>
+            {% for cell in row.cells %}
+              <{{ cell.tag }}{{ cell.attributes.addClass('sangel-table__cell') }}>
+                {{ cell.content }}
+              </{{ cell.tag }}>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tfoot>
+    {% endif %}
+  </table>
+</div>

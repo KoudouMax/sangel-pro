@@ -1,0 +1,169 @@
+{#
+  Base page layout for SangelPro.
+  Child templates can override the provided blocks to adjust specific sections
+  without duplicating the shared structure.
+#}
+{% set title_attributes = title_attributes|default(create_attribute()) %}
+
+<div{{attributes.addClass('sangelpro-page')}}>
+	{% block header %}
+		{{ include('@sangelpro_theme/layout/includes/_header.html.twig') }}
+	{% endblock %}
+
+	{% block hero %}
+		{% if page.hero %}
+			<section class="relative overflow-hidden bg-gradient-to-r from-sangel-primary/5 via-white to-sangel-primary/5">
+				<div class="absolute -left-10 top-10 hidden h-24 w-24 rounded-full border-8 border-sangel-primary/20 lg:block"></div>
+				<div class="mx-auto max-w-7xl px-4 py-8">{{ page.hero }}</div>
+			</section>
+		{% endif %}
+	{% endblock %}
+
+	{% block category_nav %}
+		{% if page.category_nav %}
+			{% set category_nav_classes = category_nav_classes|default(['border-b', 'border-sangel-ice-strong', 'bg-white/95', 'backdrop-blur']) %}
+			<nav class="{{ category_nav_classes|join(' ') }}">
+				<div class="mx-auto w-full max-w-7xl px-4 py-4">
+					{{ page.category_nav }}
+				</div>
+			</nav>
+		{% endif %}
+	{% endblock %}
+
+	{% block page_title_section %}
+		{% set page_title_section_classes = page_title_section_classes|default(['mx-auto', 'w-full', 'max-w-7xl', 'px-4', 'py-6']) %}
+		{% if page.page_title %}
+			<section class="{{ page_title_section_classes|join(' ') }}">
+				{{ page.page_title }}
+			</section>
+		{% elseif not is_front and title %}
+			<section class="{{ page_title_section_classes|join(' ') }}">
+				{% include '@sangelpro_theme/navigation/page-title.html.twig' with {
+          title: title,
+          title_prefix: title_prefix,
+          title_suffix: title_suffix,
+          title_attributes: title_attributes
+        } only %}
+			</section>
+		{% endif %}
+	{% endblock %}
+
+	{% block pre_content %}
+		{% if page.pre_content %}
+			<section class="mx-auto w-full max-w-7xl px-4 py-6 print:hidden">
+				{{ page.pre_content }}
+			</section>
+		{% endif %}
+	{% endblock %}
+
+	{% block main_layout %}
+		{% set main_classes = main_classes|default(['mx-auto', 'flex', 'w-full', 'max-w-7xl', 'flex-1', 'flex-col', 'gap-8', 'px-4', 'pb-10', 'lg:flex-row']) %}
+		<main class="{{ main_classes|join(' ') }}">
+			{% block filters_column %}
+				{% if page.filters %}
+					{% set filters_attributes = filters_attributes|default(
+            create_attribute()
+              .addClass('w-full', 'print:hidden', 'lg:w-72', 'lg:flex-shrink-0', 'lg:sticky', 'lg:self-start', 'xl:w-80')
+              .setAttribute('style', 'top: var(--sangel-header-offset, 7rem);')
+          ) %}
+					<aside{{filters_attributes}}>
+						<div class="sangel-filters space-y-4 lg:overflow-y-auto" style="max-height: calc(100vh - var(--sangel-header-offset, 7rem) - 1.5rem);">
+							{{ page.filters }}
+						</div>
+					</aside>
+				{% endif %}
+			{% endblock %}
+
+			{% block primary_column %}
+				<section class="flex-1">
+					{% block system_messages %}
+						{% if messages %}
+							<div class="mb-6 space-y-4">{{ messages }}</div>
+						{% endif %}
+					{% endblock %}
+
+					{% block content_header %}
+						{% set breadcrumb_render = page.breadcrumb ?? breadcrumb ?? NULL %}
+						{% set show_back = back_href is defined and back_href and (show_back_link is not defined or show_back_link) %}
+
+						{% set show_print = print_label is defined and print_label %}
+						{% if show_back or show_print or breadcrumb_render %}
+							<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+								<div class="flex flex-col gap-3 sm:flex-1">
+									{% if show_back %}
+										<a href="{{ back_href }}" class="inline-flex items-center gap-2 self-start rounded-full border border-sangel-primary px-3 py-1 text-xs font-semibold text-sangel-primary transition hover:bg-sangel-primary/10 focus:outline-none focus:ring-2 focus:ring-sangel-primary/20">
+											<span aria-hidden="true">←</span>
+											<span>{{ 'Retour'|t }}</span>
+										</a>
+									{% endif %}
+									{% if breadcrumb_render %}
+										<div class="text-xs text-sangel-text/60">
+											{{ breadcrumb_render }}
+										</div>
+									{% endif %}
+								</div>
+						{% if show_print %}
+
+                  {% if export_route_options is not defined %}
+						{% set export_arguments = {} %}
+						{% if arguments is defined and arguments %}
+							{% for key, value in arguments %}
+								{% set normalized_value = value is iterable ? (value|first) : value %}
+								{% if normalized_value is same as(null) %}
+									{% set normalized_value = '' %}
+								{% endif %}
+									{% set normalized_value = normalized_value ~ '' %}
+									{% set export_arguments = export_arguments|merge({ (key):(normalized_value) }) %}
+								{% endfor %}
+							{% endif %}
+							{% set export_route_options = export_arguments ? {'query': {'arguments_json': export_arguments|json_encode}} : {} %}
+						{% endif %}
+
+						{% include '@sangelpro_theme/layout/includes/_export_action.html.twig' with {
+                    route: print_url|default('') ? null : 'sangel_core.export_catalog_csv',
+                    route_parameters: {'view_id': view_id|default('product_catalog'), 'display_id': display_id|default('for_current_user')},
+                    route_options: export_route_options,
+                    url: print_url|default(''),
+                    label: print_label|default('Exporter (CSV)'|t),
+                    size: 'sm'
+                  } only %}
+
+					{% endif %}
+				</div>
+			{% endif %}
+					{% endblock %}
+
+					{% block main_content %}
+						{% block content %}
+							{{ page.content }}
+						{% endblock %}
+					{% endblock %}
+				</section>
+			{% endblock %}
+
+			{% block sidebar_column %}
+				{% if page.sidebar %}
+					<aside class="w-full max-w-sm space-y-6 lg:w-80">
+						{{ page.sidebar }}
+					</aside>
+				{% endif %}
+			{% endblock %}
+
+			{% block selection_panel %}
+				{% if page.selection_panel %}
+					<aside class="w-full max-w-xs space-y-4 lg:w-72">
+						{{ page.selection_panel }}
+					</aside>
+				{% endif %}
+			{% endblock %}
+		</main>
+	{% endblock %}
+
+	{% block footer %}
+		{{ include('@sangelpro_theme/layout/includes/_footer.html.twig') }}
+	{% endblock %}
+
+	{% if page.page_bottom %}
+		<div class="hidden">{{ page.page_bottom }}</div>
+	{% endif %}
+</div>

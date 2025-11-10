@@ -1,0 +1,65 @@
+{#
+ /**
+  * @file
+  * Modern progress bar styling for the SangelPro theme.
+  *
+  * Variables:
+  * - label: Optional label of the running task.
+  * - percent: Numeric progress (0-100).
+  * - message: Optional status message.
+  */
+#}
+{% set progress_attributes = attributes|default(create_attribute()) %}
+{% set percent_value = percent|default(0) %}
+{% set clamped_percent = percent_value %}
+{% if clamped_percent < 0 %}
+  {% set clamped_percent = 0 %}
+{% elseif clamped_percent > 100 %}
+  {% set clamped_percent = 100 %}
+{% endif %}
+
+{% set wrapper_classes = [
+  'sangel-progress',
+  'flex',
+  'flex-col',
+  'gap-3',
+  'rounded-3xl',
+  'border',
+  'border-sangel-ice/70',
+  'bg-white',
+  'p-5',
+  'shadow-[0_24px_50px_-30px_rgba(15,23,42,0.45)]'
+] %}
+
+<div{{ progress_attributes.addClass(wrapper_classes).setAttribute('data-drupal-progress', '') }}>
+  {% if label or message %}
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      {% if label %}
+        <div class="text-xs font-semibold uppercase tracking-[0.3em] text-sangel-text/45">
+          {{ label }}
+        </div>
+      {% endif %}
+      <div class="inline-flex items-center gap-2 rounded-full bg-sangel-ice/70 px-3 py-1 text-xs font-semibold text-sangel-primary">
+        {{ clamped_percent|number_format(0) }}%
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="relative h-3 overflow-hidden rounded-full bg-sangel-ice/50">
+    <div
+      class="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-sangel-primary via-sangel-primary/80 to-sangel-primary-dark transition-all duration-200 ease-out"
+      style="width: {{ clamped_percent }}%;"
+      role="progressbar"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="{{ clamped_percent }}">
+      <span class="sr-only">{{ clamped_percent|number_format(0) }}%</span>
+    </div>
+  </div>
+
+  {% if message %}
+    <div class="text-xs text-sangel-text/60">
+      {{ message }}
+    </div>
+  {% endif %}
+</div>

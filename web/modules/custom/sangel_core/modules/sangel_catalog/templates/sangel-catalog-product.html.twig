@@ -1,0 +1,10 @@
+{#
+ # Displays a single product entry within a catalog management form.
+ #}
+{% set item_classes = ['sangel-catalog-product-row'] %}
+<div{{ attributes.addClass(item_classes) }}>
+  <div class="sangel-catalog-product-row__title">{{ title }}</div>
+  <div class="sangel-catalog-product-row__client">{{ client_type }}</div>
+  <div class="sangel-catalog-product-row__price">{{ price }}</div>
+  <div class="sangel-catalog-product-row__actions">{{ actions }}</div>
+</div>

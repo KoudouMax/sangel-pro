@@ -1,0 +1,7 @@
+kint.form:
+  path: '/admin/config/development/kint'
+  defaults:
+    _form: '\Drupal\kint\SettingsForm'
+    _title: 'Kint settings'
+  requirements:
+    _permission: 'administer site configuration'

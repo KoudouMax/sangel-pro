@@ -1,0 +1,36 @@
+services:
+  sangel_core.require_login_subscriber:
+    class: 'Drupal\sangel_core\EventSubscriber\RequireLoginSubscriber'
+    arguments: [ '@current_user' ]
+    tags:
+      - { name: event_subscriber }
+
+  sangel_core.redirect_commercial_subscriber:
+    class: 'Drupal\sangel_core\EventSubscriber\CommercialRedirectSubscriber'
+    arguments: [ '@current_user' ]
+    tags:
+      - { name: event_subscriber }
+
+  sangel_core.node_access_subscriber:
+    class: 'Drupal\sangel_core_base\EventSubscriber\NodeAccessSubscriber'
+    arguments: [ '@current_user' ]
+    tags:
+      - { name: event_subscriber }
+
+  sangel_core.twig_extension:
+    class: Drupal\sangel_core\Twig\KgysCoreTwigExtension
+    arguments: ['@current_user']
+    tags:
+      - { name: twig.extension }
+
+  sangel_core.catalog_product_repository:
+    class: Drupal\sangel_core\Repository\CatalogProductRepository
+    arguments:
+      - '@entity_type.manager'
+      - '@database'
+      - '@logger.channel.sangel_catalog'
+
+  sangel_core.catalog_export_manager:
+    class: Drupal\sangel_core\Service\CatalogExportManager
+    arguments:
+      - '@request_stack'

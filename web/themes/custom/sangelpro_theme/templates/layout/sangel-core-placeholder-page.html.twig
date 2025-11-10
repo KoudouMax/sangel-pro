@@ -1,0 +1,11 @@
+{#
+  Placeholder template rendered for upcoming dashboard pages.
+  Variables:
+  - identifier: Machine name for the placeholder (used for CSS hooks).
+  - title: Human readable title.
+#}
+<div class="sangel-core-placeholder" data-sangel-core-placeholder="{{ identifier }}">
+    {% if title %}
+        <h1 class="sangel-core-placeholder__title">{{ title }}</h1>
+    {% endif %}
+</div>

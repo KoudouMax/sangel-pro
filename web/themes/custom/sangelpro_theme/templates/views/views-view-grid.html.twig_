@@ -1,0 +1,8 @@
+{# GRILLE — applique notre classe responsive et conserve la classe native view-content #}
+<div class="sp-grid view-content">
+  {% for row in rows %}
+    <div class="sp-grid__col">
+      {{ row.content }}
+    </div>
+  {% endfor %}
+</div>

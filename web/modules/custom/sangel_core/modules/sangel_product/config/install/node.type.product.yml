@@ -1,0 +1,12 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+name: Product
+type: product
+description: 'Product content.'
+help: null
+new_revision: false
+preview_mode: 1
+display_submitted: true

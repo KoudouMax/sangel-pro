@@ -1,0 +1,21 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_catalog_clients
+    - node.type.catalog
+id: node.catalog.field_catalog_clients
+field_name: field_catalog_clients
+entity_type: node
+bundle: catalog
+label: 'Assigned clients'
+description: 'Clients who can view this catalog in their account.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:user'
+  handler_settings:
+    include_anonymous: false
+field_type: entity_reference

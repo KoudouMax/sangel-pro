@@ -1,0 +1,104 @@
+{# Generic header counter item used for cart and catalog alerts. #}
+{% set has_link = url is not empty %}
+{% set icon_name = icon|default('heart') %}
+{% set counter_value = counter|default(0) %}
+{% set has_counter = has_counter is defined ? has_counter : counter_value > 0 %}
+{% set variant = variant|default(icon_name)|lower %}
+{% set base_attributes = attributes is defined ? attributes : create_attribute() %}
+{% set is_active = is_active is defined and is_active %}
+
+{% set wrapper_attributes = base_attributes
+  .addClass(
+    'sangel-header-counter',
+    'sangel-header-counter--' ~ variant,
+    is_active ? 'is-active'
+  )
+  .setAttribute('id', 'sangel_header_counter__' ~ variant)
+%}
+
+{% set link_classes = ['sangel-header-counter__link'] %}
+{% if has_counter %}
+  {% set link_classes = link_classes|merge(['sangel-header-counter__link--active']) %}
+{% endif %}
+{% if is_active %}
+  {% set link_classes = link_classes|merge(['sangel-header-counter__link--current']) %}
+{% endif %}
+
+{% set icon_wrapper_classes = [
+  'sangel-header-counter__icon',
+  'sangel-header-counter__icon--' ~ icon_name
+] %}
+
+{% set label_classes = [
+  'sangel-header-counter__label'
+] %}
+
+{% set badge_label = 'Nombre d’éléments : @count'|t({'@count': counter_value}) %}
+
+<div{{ wrapper_attributes }}>
+  {% if has_link %}
+    <a href="{{ url }}" class="{{ link_classes|join(' ') }}">
+  {% else %}
+    <span class="{{ link_classes|join(' ') }}">
+  {% endif %}
+      <span class="{{ icon_wrapper_classes|join(' ') }}">
+        {% if icon_name == 'catalog' %}
+          <svg class="sangel-header-counter__svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="3.5" y="3.5" width="7" height="7" rx="1.6" stroke="currentColor" stroke-width="1.8"/>
+            <rect x="13.5" y="3.5" width="7" height="7" rx="1.6" stroke="currentColor" stroke-width="1.8"/>
+            <rect x="3.5" y="13.5" width="7" height="7" rx="1.6" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M13.5 16h7M13.5 20h4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        {% elseif icon_name == 'cart' %}
+          <svg class="sangel-header-counter__svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M3.5 4h2.1l1.4 9.3a2 2 0 0 0 2 1.7h8.1a2 2 0 0 0 2-1.6l1.4-7.4H6.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="9.5" cy="19.5" r="1.5" stroke="currentColor" stroke-width="1.8"/>
+            <circle cx="17" cy="19.5" r="1.5" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        {% elseif icon_name == 'history' %}
+          <svg class="sangel-header-counter__svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4.5 12a7.5 7.5 0 1 1 2.2 5.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3 8v4h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 7.5V12l3 1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        {% elseif icon_name in ['user', 'users'] %}
+          <svg class="sangel-header-counter__svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M6 20a6 6 0 0 1 12 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            {% if icon_name == 'users' %}
+              <path d="M6.5 11.5a3 3 0 1 1 3.5-4.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M17.5 11.5a3 3 0 1 0-3.5-4.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            {% endif %}
+          </svg>
+        {% elseif icon_name == 'logout' %}
+          <svg class="sangel-header-counter__svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M14 7l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M19 12H9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 4.5H6.8A1.8 1.8 0 0 0 5 6.3v11.4A1.8 1.8 0 0 0 6.8 19.5H12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        {% elseif icon_name == 'login' %}
+          <svg class="sangel-header-counter__svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M10 7l-5 5 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 12h9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 4.5h5.2a1.8 1.8 0 0 1 1.8 1.8v11.4a1.8 1.8 0 0 1-1.8 1.8H12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        {% elseif icon_name == 'heart' %}
+          <svg class="sangel-header-counter__svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 20s-6-4.7-8.7-7.4A5 5 0 0 1 3.3 5a4.6 4.6 0 0 1 5.7.2L12 8l3-2.8a4.6 4.6 0 0 1 5.7-.2 5 5 0 0 1 0 7.4C18 15.3 12 20 12 20Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        {% else %}
+          <span class="sangel-header-counter__icon-placeholder" aria-hidden="true"></span>
+        {% endif %}
+
+        {% if has_counter and counter_value > 0 %}
+          <span class="sangel-header-counter__badge" aria-hidden="true">{{ counter_value }}</span>
+          <span class="sr-only text-xs">{{ badge_label }}</span>
+        {% endif %}
+      </span>
+      <span class="{{ label_classes|join(' ') }}">{{ label }}</span>
+  {% if has_link %}
+    </a>
+  {% else %}
+    </span>
+  {% endif %}
+</div>

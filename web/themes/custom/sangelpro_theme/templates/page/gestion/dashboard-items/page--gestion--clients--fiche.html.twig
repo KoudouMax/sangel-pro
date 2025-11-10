@@ -1,0 +1,265 @@
+{% set summary = gestion_client_summary ?? {} %}
+{% set node = client_node ?? null %}
+{% set owner_argument = gestion_client_owner_argument ?? null %}
+
+{% embed '@sangelpro_theme/layout/page--gestion.html.twig' with { show_back_link: true, title: 'Fiche client : @client.'|t({'@client': summary.label}) } %}
+
+	{% block content %}
+		<div class="space-y-8">
+			<section class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+				<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+					<div class="rounded-3xl bg-white p-5 shadow-[0_20px_45px_-25px_rgba(15,23,42,0.25)]">
+						<div class="flex items-start justify-between">
+							<div>
+								<p class="text-xs font-semibold uppercase tracking-[0.3em] text-sangel-text/40">{{ 'Identité'|t }}</p>
+								<h2 class="mt-3 text-xl font-semibold text-sangel-text">{{ summary.label ?? (node ? node.label : '') }}</h2>
+								{% if summary.company %}
+									<p class="mt-1 text-sm text-sangel-text/60">{{ summary.company }}</p>
+								{% endif %}
+							</div>
+							<span class="rounded-full border border-sangel-ice bg-sangel-ice/40 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-sangel-text/60">
+								{{ summary.status_label ?? '—' }}
+							</span>
+						</div>
+						<div class="mt-4 grid gap-3 text-xs text-sangel-text/60">
+							{% if summary.email %}
+								<div class="rounded-2xl bg-sangel-ice/40 px-4 py-3">
+									<span class="font-semibold text-sangel-text/70">{{ 'Email'|t }}</span>
+									<div class="mt-1 break-words text-sangel-text">{{ summary.email }}</div>
+								</div>
+							{% endif %}
+							{% if summary.phone %}
+								<div class="rounded-2xl bg-sangel-ice/40 px-4 py-3">
+									<span class="font-semibold text-sangel-text/70">{{ 'Téléphone'|t }}</span>
+									<div class="mt-1 text-sangel-text">{{ summary.phone }}</div>
+								</div>
+							{% endif %}
+						</div>
+					</div>
+
+					<div class="rounded-3xl bg-white p-5 shadow-[0_20px_45px_-25px_rgba(15,23,42,0.25)]">
+						<p class="text-xs font-semibold uppercase tracking-[0.3em] text-sangel-text/40">{{ 'Suivi'|t }}</p>
+						<ul class="mt-4 space-y-4 text-sm text-sangel-text">
+							<li class="flex items-center justify-between rounded-2xl border border-sangel-ice/80 px-4 py-3">
+								<span class="text-sangel-text/70">{{ 'Créé le'|t }}</span>
+								<strong>{{ summary.created ?? '—' }}</strong>
+							</li>
+							<li class="flex items-center justify-between rounded-2xl border border-sangel-ice/80 px-4 py-3">
+								<span class="text-sangel-text/70">{{ 'Mis à jour'|t }}</span>
+								<strong>{{ summary.updated ?? '—' }}</strong>
+							</li>
+							<li class="flex items-center justify-between rounded-2xl border border-sangel-ice/80 px-4 py-3">
+								<span class="text-sangel-text/70">{{ 'Dernière connexion'|t }}</span>
+								<strong>{{ summary.owner_last_access ?? '—' }}</strong>
+							</li>
+						</ul>
+					</div>
+
+					<div class="rounded-3xl bg-white p-5 shadow-[0_20px_45px_-25px_rgba(15,23,42,0.25)]">
+						<p class="text-xs font-semibold uppercase tracking-[0.3em] text-sangel-text/40">{{ 'Raccourcis'|t }}</p>
+						<div class="mt-4 space-y-3 text-sm">
+							<a href="{{ path('sangel_core.manage_clients_catalogs_page', {'node': client_node.id}) }}" class="flex items-center justify-between rounded-2xl border border-sangel-ice px-4 py-3 text-sangel-text transition hover:border-sangel-primary hover:text-sangel-primary">
+								<span>{{ 'Catalogue'|t }}</span>
+								<span aria-hidden="true" class="text-lg text-sangel-primary">↗</span>
+							</a>
+							<a href="{{ path('sangel_core.manage_clients_cart_page', {'node': client_node.id}) }}" class="flex items-center justify-between rounded-2xl border border-sangel-ice px-4 py-3 text-sangel-text transition hover:border-sangel-primary hover:text-sangel-primary">
+								<span>{{ 'Panier'|t }}</span>
+								<span aria-hidden="true" class="text-lg text-sangel-primary">↗</span>
+							</a>
+							<a href="{{ path('sangel_core.manage_clients_orders', {'node': client_node.id}) }}" class="flex items-center justify-between rounded-2xl border border-sangel-ice px-4 py-3 text-sangel-text transition hover:border-sangel-primary hover:text-sangel-primary">
+								<span>{{ 'Commandes'|t }}</span>
+								<span aria-hidden="true" class="text-lg text-sangel-primary">↗</span>
+							</a>
+							<a href="{{ path('sangel_core.manage_clients_edit', {'node': client_node.id}) }}" class="flex items-center justify-between rounded-2xl border border-sangel-ice px-4 py-3 text-sangel-text transition hover:border-sangel-primary hover:text-sangel-primary">
+								<span>{{ 'Modifier le profil'|t }}</span>
+								<span aria-hidden="true" class="text-lg text-sangel-primary">↗</span>
+							</a>
+						</div>
+					</div>
+				</div>
+
+				{% if summary.owner_mail or summary.phone %}
+					<div class="flex h-full flex-col gap-4">
+						<div class="rounded-3xl bg-white p-5 shadow-[0_20px_45px_-25px_rgba(15,23,42,0.25)]">
+							<p class="text-xs font-semibold uppercase tracking-[0.3em] text-sangel-text/40">{{ 'Contact direct'|t }}</p>
+							<div class="mt-4 space-y-3 text-sm">
+								{% if summary.email or summary.owner_mail %}
+									<a href="mailto:{{ summary.email ?? summary.owner_mail }}" class="flex items-center justify-between rounded-2xl bg-sangel-ice/40 px-4 py-3 font-semibold text-sangel-text transition hover:bg-sangel-primary/10 hover:text-sangel-primary">
+										<span>{{ 'Envoyer un email'|t }}</span>
+										<span aria-hidden="true">✉️</span>
+									</a>
+								{% endif %}
+								{% if summary.phone %}
+									<a href="tel:{{ summary.phone }}" class="flex items-center justify-between rounded-2xl bg-sangel-ice/40 px-4 py-3 font-semibold text-sangel-text transition hover:bg-sangel-primary/10 hover:text-sangel-primary">
+										<span>{{ 'Appeler'|t }}</span>
+										<span aria-hidden="true">📞</span>
+									</a>
+								{% endif %}
+							</div>
+						</div>
+
+						<div class="rounded-3xl bg-white p-5 shadow-[0_20px_45px_-25px_rgba(15,23,42,0.25)]">
+							<p class="text-xs font-semibold uppercase tracking-[0.3em] text-sangel-text/40">{{ 'Notes rapides'|t }}</p>
+							<p class="mt-3 text-xs text-sangel-text/60">{{ 'Conservez ici vos informations importantes ou rendez-vous à préparer.'|t }}</p>
+							<div class="mt-4 rounded-2xl border border-dashed border-sangel-ice/70 bg-sangel-ice/30 px-4 py-3 text-xs text-sangel-text/50">
+								{{ 'Astuce : créez des tags dans le catalogue pour retrouver facilement les prochains ajouts.'|t }}
+							</div>
+						</div>
+					</div>
+				{% endif %}
+			</section>
+
+			<div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+				<div class="space-y-6">
+					{% if gestion_client_import_form is defined %}
+						<section class="rounded-3xl bg-white p-0 shadow-[0_18px_35px_-28px_rgba(15,23,42,0.4)]">
+							<details class="group overflow-hidden rounded-3xl">
+								<summary class="flex cursor-pointer items-start justify-between gap-4 rounded-3xl border border-transparent px-6 py-6 text-left transition hover:bg-sangel-ice/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-sangel-primary/30 group-open:border-sangel-ice/60 group-open:rounded-b-none group-open:bg-sangel-ice/20">
+									<div class="space-y-2">
+										<span class="inline-flex items-center gap-2 rounded-full border border-sangel-primary/20 bg-sangel-primary/10 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-sangel-primary">
+											<span aria-hidden="true">📦</span>
+											{{ 'Catalogue client'|t }}
+										</span>
+										<h3 class="text-lg font-semibold text-sangel-text">{{ 'Ajouter des produits au catalogue'|t }}</h3>
+										<p class="text-sm text-sangel-text/60 md:max-w-2xl">
+											{{ 'Importez un fichier CSV pour mettre à jour la sélection. Les nouveaux produits sont ajoutés automatiquement au catalogue personnalisé du client.'|t }}
+										</p>
+									</div>
+									<span aria-hidden="true" class="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-full border border-sangel-primary/20 bg-white text-lg font-semibold text-sangel-primary transition group-open:rotate-45">+</span>
+								</summary>
+
+								<div class="space-y-5 border-t border-sangel-ice/60 bg-white px-6 py-6">
+									<div class="rounded-2xl border border-dashed border-sangel-ice/70 bg-sangel-ice/20 p-4 text-xs text-sangel-text/60">
+										{{ 'Seuls les identifiants produits présents dans le fichier seront synchronisés. Les références absentes seront retirées automatiquement du catalogue.'|t }}
+									</div>
+									<div class="space-y-4" data-client-import-form>
+										{{ gestion_client_import_form }}
+									</div>
+								</div>
+							</details>
+						</section>
+					{% endif %}
+
+					{% set cards = [] %}
+					{% if summary.status_label %}
+						{% set cards = cards|merge([{
+							label: 'Statut'|t,
+							value: summary.status_label,
+							pill: true,
+						}]) %}
+					{% endif %}
+					{% if summary.owner_name %}
+						{% set cards = cards|merge([{
+							label: 'Conseiller référent'|t,
+							value: summary.owner_name,
+							meta: summary.owner_mail ? summary.owner_mail : NULL,
+						}]) %}
+					{% endif %}
+					{% if summary.email %}
+						{% set cards = cards|merge([{
+							label: 'Email principal'|t,
+							value: summary.email,
+							meta: summary.company ? summary.company : NULL,
+						}]) %}
+					{% endif %}
+					{% if summary.phone %}
+						{% set cards = cards|merge([{
+							label: 'Téléphone'|t,
+							value: summary.phone,
+						}]) %}
+					{% endif %}
+					{% if summary.owner_last_access %}
+						{% set cards = cards|merge([{
+							label: 'Dernière connexion'|t,
+							value: summary.owner_last_access,
+						}]) %}
+					{% endif %}
+
+					<section class="space-y-6 rounded-3xl bg-white p-6 shadow-[0_18px_35px_-28px_rgba(15,23,42,0.4)]">
+						<header class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+							<div class="space-y-2">
+								<span class="inline-flex items-center gap-2 rounded-full border border-sangel-ice/70 bg-sangel-ice/40 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-sangel-text/60">
+									<span aria-hidden="true">✱</span>
+									{{ 'Fiche client'|t }}
+								</span>
+								<h3 class="text-xl font-semibold text-sangel-text">{{ 'Détails de la fiche client'|t }}</h3>
+								<p class="text-sm text-sangel-text/60 md:max-w-xl">
+									{{ 'Visualisez les informations clés du compte et accédez à l’ensemble des champs administrables depuis le panneau détaillé.'|t }}
+								</p>
+							</div>
+
+							{% if node %}
+								<a href="{{ path('sangel_core.manage_clients_edit', {'node': node.id}) }}" class="inline-flex items-center gap-2 self-start rounded-full border border-sangel-primary px-4 py-2 text-xs font-semibold text-sangel-primary transition hover:bg-sangel-primary/10 focus:outline-none focus:ring-2 focus:ring-sangel-primary/20">
+									<span aria-hidden="true">✎</span>
+									{{ 'Modifier la fiche'|t }}
+								</a>
+							{% endif %}
+						</header>
+
+						{% if cards %}
+							<div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+								{% for card in cards %}
+									<div class="flex flex-col gap-2 rounded-2xl border border-sangel-ice/70 bg-sangel-ice/30 p-4">
+										<span class="text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-sangel-text/45">
+											{{ card.label }}
+										</span>
+										{% if card.pill %}
+											<span class="inline-flex w-max items-center gap-2 rounded-full border border-sangel-primary/20 bg-white px-3 py-1 text-sm font-semibold text-sangel-primary">
+												<span class="h-2 w-2 rounded-full bg-sangel-primary"></span>
+												{{ card.value }}
+											</span>
+										{% else %}
+											<strong class="text-base text-sangel-text">{{ card.value }}</strong>
+										{% endif %}
+										{% if card.meta %}
+											<span class="text-xs text-sangel-text/60">{{ card.meta }}</span>
+										{% endif %}
+									</div>
+								{% endfor %}
+							</div>
+						{% endif %}
+
+						<details class="group overflow-hidden rounded-3xl border border-sangel-ice/60 bg-sangel-ice/20">
+							<summary class="flex cursor-pointer items-center justify-between gap-4 px-5 py-4 text-sm font-semibold text-sangel-text transition group-open:rounded-b-none group-open:bg-white">
+								<span>{{ 'Afficher la fiche complète'|t }}</span>
+								<span class="text-lg text-sangel-primary transition group-open:rotate-45">+</span>
+							</summary>
+
+							<div class="space-y-5 border-t border-sangel-ice/60 bg-white px-5 py-6">
+								<div class="rounded-2xl bg-sangel-ice/40 p-4 text-xs text-sangel-text/60">
+									{{ 'Retrouvez ci-dessous les champs du profil tels qu’ils sont administrés depuis Drupal.'|t }}
+								</div>
+								<div class="space-y-4 text-sm">
+									{% if node %}
+										{{ drupal_entity('node', node.id, 'full') }}
+									{% else %}
+										<p class="text-sangel-text/60">{{ 'Impossible de charger la fiche client.'|t }}</p>
+									{% endif %}
+								</div>
+							</div>
+						</details>
+					</section>
+				</div>
+
+				{% if owner_argument is not null %}
+					<section class="rounded-3xl bg-white p-6 shadow-[0_18px_35px_-28px_rgba(15,23,42,0.4)]">
+						<div class="flex flex-col gap-3 border-b border-sangel-ice/60 pb-4">
+							<h3 class="text-lg font-semibold text-sangel-text">{{ 'Catalogue actuel'|t }}</h3>
+							<p class="text-sm text-sangel-text/60">{{ 'Survolez pour consulter le détail des produits disponibles.'|t }}</p>
+						</div>
+						<div class="mt-4 max-h-[510px] overflow-hidden rounded-2xl border border-sangel-ice/70" data-client-catalog>
+							{{ drupal_view('catalog', 'user_catalog_mini', owner_argument) }}
+						</div>
+						<a href="{{ path('sangel_core.manage_clients_catalogs_page', {'node': client_node.id}) }}" class="mt-5 inline-flex items-center justify-center gap-2 rounded-full border border-sangel-primary px-4 py-2 text-xs font-semibold text-sangel-primary transition hover:bg-sangel-primary/10">
+							<span aria-hidden="true">↗</span>
+							{{ 'Ouvrir le catalogue complet'|t }}
+						</a>
+					</section>
+				{% endif %}
+			</div>
+
+			{{ page.content }}
+		</div>
+	{% endblock %}
+
+{% endembed %}

@@ -1,0 +1,13 @@
+services:
+  logger.channel.sangel_order:
+    parent: logger.channel_base
+    arguments: ['sangel_order']
+
+  sangel_order.cart_manager:
+    class: Drupal\sangel_order\Service\CartManager
+    arguments:
+      - "@request_stack"
+      - "@entity_type.manager"
+      - "@current_user"
+      - "@logger.channel.sangel_order"
+      - "@datetime.time"

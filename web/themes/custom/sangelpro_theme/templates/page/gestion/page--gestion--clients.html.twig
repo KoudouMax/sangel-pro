@@ -1,0 +1,15 @@
+{% extends '@sangelpro_theme/layout/page--compte-clients.html.twig' %}
+
+{% block content %}
+	{% include '@sangelpro_theme/page/gestion/includes/__clients-dashboard.html.twig' with {
+    identifier: 'manage-clients-account',
+    title: title,
+    clients: clients ?? [],
+    clients_summary: clients_summary ?? {'total': 0, 'active': 0, 'inactive': 0},
+    client_type_filters: client_type_filters ?? [],
+    create_client_url: create_client_url ?? '',
+    import_feed_url: import_feed_url ?? '',
+    catalog_overview_url: catalog_overview_url ?? '',
+    selected_client: selected_client ?? {}
+  } only %}
+{% endblock %}

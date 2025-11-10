@@ -1,0 +1,17 @@
+kint.settings:
+  type: config_object
+  label: 'Kint settings'
+  mapping:
+    early_enable:
+      type: boolean
+      label: 'Enable dumps before authentication'
+    date_format:
+      type: string
+      label: 'Format for date in dump footer'
+      nullable: true
+    use_kint_trace_in_devel:
+      type: boolean
+      label: "Use kint's trace instead of devel's in ddebug_backtrace"
+    rich_theme:
+      type: string
+      label: 'Rich renderer theme'

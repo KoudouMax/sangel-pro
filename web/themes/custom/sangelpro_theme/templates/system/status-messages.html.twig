@@ -1,0 +1,55 @@
+{#
+/**
+ * @file
+ * Theme override for status messages with Sangel styling.
+ */
+#}
+
+{% set icons = {
+  'status': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>',
+  'warning': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008v.008H12V16.5Z"/><path stroke-linecap="round" stroke-linejoin="round" d="m9.75 4.5-7.125 12.75A1.5 1.5 0 0 0 4.875 19.5h14.25a1.5 1.5 0 0 0 1.312-2.25L13.312 4.5a1.5 1.5 0 0 0-2.624 0Z"/></svg>',
+  'error': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.401 3.003c1.16-1.997 4.038-1.997 5.197 0l5.14 8.845c1.176 2.024-.294 4.552-2.598 4.552H6.86c-2.304 0-3.774-2.528-2.598-4.552l5.14-8.845Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008v.008H12V16.5Z"/></svg>',
+  'info': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11 11.75h2v5.5m-2-5.5v5.5m2-8.5h-.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>'
+} %}
+
+<div data-drupal-messages>
+  {% for type, messages in message_list %}
+    {% set status_heading = status_headings[type] ?? type %}
+    {% set message_classes = [
+      'messages',
+      'messages--' ~ type|clean_class
+    ] %}
+    <div role="contentinfo" aria-label="{{ status_heading }}" {{ attributes.addClass(message_classes)|without('role', 'aria-label') }}>
+      {% set icon_markup = icons[type]|default(icons['info']) %}
+      {% if type == 'error' %}
+        <div role="alert">
+      {% endif %}
+
+      <div class="messages__container">
+        <div class="messages__icon" aria-hidden="true">
+          {{ icon_markup|raw }}
+        </div>
+
+        <div class="messages__content">
+          {% if status_heading %}
+            <h2 class="sr-only">{{ status_heading }}</h2>
+          {% endif %}
+
+          {% if messages|length > 1 %}
+            <ul class="messages__list">
+              {% for message in messages %}
+                <li class="messages__item">{{ message }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="messages__item">{{ messages|first }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if type == 'error' %}
+        </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>

@@ -1,0 +1,46 @@
+{#
+/**
+ * @file
+ * Theme override to display a Pub node (client-targeted banner).
+ */
+#}
+
+{% set banner_items = node.field_banner_image %}
+{% set image_count = banner_items|length %}
+{% set classes = [
+  'relative overflow-hidden rounded-3xl border border-sangel-primary/15 bg-gradient-to-br from-white via-white to-sangel-ice/40 shadow-md transition hover:-translate-y-[1px] hover:shadow-lg print:border print:border-sangel-ice-strong print:bg-white',
+  'node',
+  'mb-4',
+  'node--type-' ~ node.bundle|clean_class,
+  image_count ? 'node--with-images' : 'node--without-images',
+] %}
+
+<article{{attributes.addClass(classes)}}>
+	{% if image_count %}
+		<div class="relative overflow-hidden rounded-3xl bg-white">
+			<div class="flex snap-x snap-mandatory overflow-x-auto scroll-smooth text-center" data-pub-slider>
+				{% for image in banner_items %}
+					{% set file = image.entity %}
+					{% set image_url = file ? file_url(file.getFileUri()) : '' %}
+					{% if image_url %}
+						<figure class="relative h-64 w-full flex-shrink-0 snap-center overflow-hidden bg-sangel-ice sm:h-80">
+							<img src="{{ image_url }}" alt="{{ image.alt ?: '' }}" title="{{ image.title ?: '' }}" class="h-full w-full object-cover transition duration-700 group-hover:scale-[1.02]" loading="lazy">
+							{% if image.title %}
+								<figcaption class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-6 py-4 text-left text-sm font-medium text-white">
+									{{ image.title }}
+								</figcaption>
+							{% endif %}
+						</figure>
+					{% endif %}
+				{% endfor %}
+			</div>
+			{% if image_count > 1 %}
+				<div class="absolute inset-x-0 bottom-4 flex justify-center gap-2">
+					{% for i in 0..image_count - 1 %}
+						<span class="h-2 w-2 rounded-full border border-white/50 bg-white/60 opacity-70 transition group-hover:opacity-100"></span>
+					{% endfor %}
+				</div>
+			{% endif %}
+		</div>
+	{% endif %}
+</article>

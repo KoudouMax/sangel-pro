@@ -1,0 +1,62 @@
+.sangel-catalog-import-form {
+  position: relative;
+}
+
+.sangel-catalog-import__status {
+  display: none;
+  margin-top: 1.5rem;
+}
+
+.sangel-catalog-import__status.is-active {
+  display: block;
+}
+
+.sangel-catalog-import__status-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  background-color: rgba(29, 74, 156, 0.1);
+  color: #1d4a9c;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sangel-catalog-import__spinner {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 9999px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: sangel-catalog-spinner 0.8s linear infinite;
+}
+
+@keyframes sangel-catalog-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.sangel-catalog-import-form .is-loading {
+  opacity: 0.7;
+  cursor: wait;
+  pointer-events: none;
+}
+
+.sangel-catalog-import__button-spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+  border-radius: 9999px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: sangel-catalog-spinner 0.8s linear infinite;
+}
+
+.sangel-catalog-import__button-label {
+  vertical-align: middle;
+  display: inline-block;
+}

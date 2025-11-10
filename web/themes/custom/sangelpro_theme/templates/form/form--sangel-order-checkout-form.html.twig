@@ -1,0 +1,100 @@
+{% set form = element %}
+{% set hidden_fields = form|without('actions', 'empty', 'back_link') %}
+
+<form{{ attributes }}>
+  {% if cart_is_empty %}
+    <section class="mx-auto max-w-3xl space-y-6 text-center">
+      <header class="space-y-2">
+        <h1 class="text-3xl font-bold text-sangel-primary">{{ 'Votre panier est vide'|t }}</h1>
+        <p class="text-sm text-sangel-text/70">{{ 'Ajoutez des produits avant de finaliser votre commande.'|t }}</p>
+      </header>
+      <div class="rounded-3xl border border-dashed border-sangel-ice bg-white/60 p-10 shadow-sm">
+        {% if form.empty is defined %}
+          {{ form.empty }}
+        {% endif %}
+        <div class="mt-6 inline-flex items-center justify-center">
+          {% if form.back_link is defined %}
+            {{ form.back_link }}
+          {% else %}
+            <a href="{{ cart_back_url }}" class="inline-flex items-center justify-center rounded-full bg-sangel-primary px-6 py-3 text-sm font-semibold text-white shadow hover:bg-sangel-primary/90">{{ 'Retour au panier'|t }}</a>
+          {% endif %}
+        </div>
+      </div>
+      <div class="hidden">{{ hidden_fields }}</div>
+    </section>
+  {% else %}
+    <div class="hidden">{{ hidden_fields }}</div>
+    <section class="mx-auto max-w-5xl space-y-8">
+      <header class="flex flex-col gap-2 text-center">
+        <p class="text-sm uppercase tracking-[0.3em] text-sangel-primary/70">{{ 'Étape finale'|t }}</p>
+        <h1 class="text-3xl font-bold text-sangel-primary">{{ cart_checkout_title }}</h1>
+        <p class="text-sm text-sangel-text/70">{{ cart_checkout_subtitle }}</p>
+      </header>
+
+      <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div class="space-y-4">
+          <ul class="space-y-4">
+            {% for item in cart_items %}
+              <li class="flex flex-col gap-4 rounded-2xl border border-sangel-ice-strong bg-white p-5 shadow-sm lg:flex-row">
+                <div class="flex h-28 w-full items-center justify-center overflow-hidden rounded-xl bg-sangel-ice lg:h-28 lg:w-32">
+                  {% if item.image_url %}
+                    <img src="{{ item.image_url }}" alt="{{ item.title }}" class="h-full w-full object-cover" loading="lazy">
+                  {% else %}
+                    <span class="text-xs font-semibold uppercase tracking-wider text-sangel-text/40">{{ 'Aperçu'|t }}</span>
+                  {% endif %}
+                </div>
+                <div class="flex flex-1 flex-col gap-3">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div class="space-y-1">
+                      <h3 class="text-lg font-semibold text-sangel-text">
+                        {% if item.product_url %}
+                          <a href="{{ item.product_url }}" class="hover:text-sangel-primary">{{ item.title }}</a>
+                        {% else %}
+                          {{ item.title }}
+                        {% endif %}
+                      </h3>
+                      {% if item.sku %}
+                        <p class="text-xs uppercase tracking-wide text-sangel-text/50">{{ 'Réf. : @sku'|t({'@sku': item.sku}) }}</p>
+                      {% endif %}
+                      <div class="flex flex-wrap items-center gap-4 text-sm text-sangel-text/70">
+                        <span>{{ 'Quantité : @qty'|t({'@qty': item.quantity}) }}</span>
+                        <span>{{ 'Prix unitaire :'|t }} {{ item.unit_price }}&nbsp;F&nbsp;CFA</span>
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <span class="block text-xs uppercase tracking-widest text-sangel-text/50">{{ 'Sous-total'|t }}</span>
+                      <span class="text-xl font-semibold text-sangel-primary">{{ item.line_total }}&nbsp;F&nbsp;CFA</span>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <aside class="space-y-4">
+          <div class="rounded-2xl border border-sangel-ice-strong bg-white p-6 shadow-sm">
+            <h2 class="text-lg font-semibold text-sangel-text">{{ 'Récapitulatif'|t }}</h2>
+            <dl class="mt-4 space-y-3 text-sm">
+              <div class="flex items-center justify-between">
+                <dt class="text-sangel-text/70">{{ 'Articles'|t }}</dt>
+                <dd class="font-semibold text-sangel-text">{{ cart_item_count }}</dd>
+              </div>
+              <div class="flex items-center justify-between">
+                <dt class="text-sangel-text/70">{{ 'Total HT'|t }}</dt>
+                <dd class="text-2xl font-semibold text-sangel-primary">{{ cart_total }}&nbsp;F&nbsp;CFA</dd>
+              </div>
+            </dl>
+
+            <div class="mt-6 flex flex-col gap-3">
+              {% if form.actions is defined %}
+                {{ form.actions }}
+              {% endif %}
+              <a href="{{ cart_continue_url }}" class="inline-flex items-center justify-center rounded-full bg-sangel-ice px-6 py-3 text-sm font-semibold text-sangel-text/70 transition hover:text-sangel-primary">{{ 'Ajouter d’autres produits'|t }}</a>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  {% endif %}
+</form>

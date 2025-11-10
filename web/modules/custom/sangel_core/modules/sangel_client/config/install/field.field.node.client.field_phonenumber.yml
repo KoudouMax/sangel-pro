@@ -1,0 +1,20 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_phonenumber
+    - node.type.client
+  module:
+    - telephone
+id: node.client.field_phonenumber
+field_name: field_phonenumber
+entity_type: node
+bundle: client
+label: Telephone
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: telephone

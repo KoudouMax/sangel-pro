@@ -1,0 +1,26 @@
+{% embed '@sangelpro_theme/layout/page.html.twig' with {
+  hero: page.hero ?? null,
+  category_nav: page.feed_actions ?? null,
+  page_title: page.feed_summary ?? null,
+  view_id: view_id|default('product_catalog'),
+  display_id: display_id|default('catalog_products'),
+  arguments: arguments|default({})
+} %}
+
+	{% block pre_content %}
+		{% if page.pre_content %}
+			<section class="sangel-feed-pre-content">
+				{{ page.pre_content }}
+			</section>
+		{% endif %}
+	{% endblock %}
+
+	{% block content_header %}{% endblock %}
+
+	{% block content %}
+		<div class="sangel-feed-content">
+			{{ parent() }}
+		</div>
+	{% endblock %}
+
+{% endembed %}

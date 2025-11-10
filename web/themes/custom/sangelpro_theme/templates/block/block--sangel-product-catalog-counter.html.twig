@@ -1,0 +1,15 @@
+{# Header catalog counter block wrapper. #}
+{% set classes = [
+  'sangel-header__action',
+  'sangel-header__action--selection',
+  'sangel-header-counter',
+  'block',
+  'block-' ~ configuration.provider|clean_class,
+  'block-' ~ plugin_id|clean_class,
+] %}
+
+<div{{ attributes.addClass(classes) }}>
+  {{ title_prefix }}
+  {{ title_suffix }}
+  {{ content }}
+</div>

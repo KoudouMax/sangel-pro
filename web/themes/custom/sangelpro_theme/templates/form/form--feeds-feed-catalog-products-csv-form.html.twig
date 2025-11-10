@@ -1,0 +1,24 @@
+{% set form_attributes = attributes|default(create_attribute()) %}
+{% set title = title|default('Importer un catalogue client'|t) %}
+{% set intro = intro|default('Ajoutez un fichier CSV conforme au modèle afin d’actualiser les produits du catalogue sélectionné.'|t) %}
+
+<div class="sangel-import-form sangel-import-form--feed">
+	<header class="sangel-import-form__header">
+		<div class="sangel-import-form__title-group">
+			<h2 class="sangel-import-form__title">{{ title }}</h2>
+			<p class="sangel-import-form__description">{{ intro }}</p>
+		</div>
+
+		<ul class="sangel-import-form__steps">
+			<li>{{ 'Téléversez un fichier CSV encodé en UTF-8 (séparateur “;”).'|t }}</li>
+			<li>{{ 'Seules les références présentes dans le fichier seront ajoutées au catalogue du client.'|t }}</li>
+			<li>{{ 'Les produits déjà existants ne sont pas modifiés.'|t }}</li>
+		</ul>
+	</header>
+
+	<form{{form_attributes.addClass('sangel-import-form__body')}}>
+		<div class="sangel-import-form__fields">
+			{{ children }}
+		</div>
+	</form>
+</div>

@@ -1,0 +1,52 @@
+{#
+  Generic CSV download button.
+  Expected variables:
+    - node: The node instance used to derive the export URL (required).
+    - label: Optional link text (defaults to "Exporter en CSV").
+    - attributes: Optional attributes object for the anchor element.
+    - classes: Optional array of additional CSS classes.
+#}
+
+{% if node is not defined or node is null %}
+  {% set missing_label = 'Export indisponible'|t %}
+  <span class="inline-flex items-center gap-2 rounded-full border border-dashed border-sangel-ice px-4 py-1 text-xs font-semibold text-sangel-text/50">
+    {{ label|default(missing_label) }}
+  </span>
+{% else %}
+  {% set label = label|default('Exporter en CSV'|t) %}
+  {% set base_classes = [
+    'inline-flex',
+    'items-center',
+    'gap-2',
+    'rounded-full',
+    'border',
+    'border-sangel-primary',
+    'px-4',
+    'py-1',
+    'text-xs',
+    'font-semibold',
+    'text-sangel-primary',
+    'transition',
+    'hover:bg-sangel-primary/10',
+    'focus-visible:outline-none',
+    'focus-visible:ring-2',
+    'focus-visible:ring-sangel-primary/40',
+    'focus-visible:ring-offset-2',
+    'focus-visible:ring-offset-white',
+  ] %}
+  {% set all_classes = classes is defined ? base_classes|merge(classes) : base_classes %}
+  {% set attributes = attributes is defined ? attributes : create_attribute() %}
+
+  <a href="{{ path('sangel_core.export_products_node_csv', {'node': node.id}) }}"
+     {{ attributes.addClass(all_classes) }}
+     role="button">
+    <span aria-hidden="true" class="inline-flex h-4 w-4 items-center justify-center text-sangel-primary">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3v12"/>
+        <path d="M6 11l6 6 6-6"/>
+        <path d="M5 19h14"/>
+      </svg>
+    </span>
+    {{ label }}
+  </a>
+{% endif %}

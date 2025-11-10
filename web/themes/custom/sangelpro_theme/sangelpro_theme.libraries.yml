@@ -1,0 +1,52 @@
+global-styling:
+  version: 1.x
+  css:
+    theme:
+      build/css/style.css: {}
+      assets/css/override.css: {}
+  js:
+    assets/js/theme.js: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+    - core/once
+
+global-scripts:
+  js:
+    assets/js/interactions.js: {}
+  dependencies:
+    - core/once
+
+product-actions:
+  js:
+    assets/js/product-actions.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+    - core/drupal.ajax
+    - core/drupalSettings
+
+print-actions:
+  css:
+    theme:
+      assets/css/print.css: {}
+  js:
+    assets/js/print-actions.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+
+cart-actions:
+  js:
+    assets/js/cart-actions.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+    - core/drupal.ajax
+
+manage-clients:
+  js:
+    assets/js/manage-clients.js: {}
+  dependencies:
+    - core/drupal
+    - core/once

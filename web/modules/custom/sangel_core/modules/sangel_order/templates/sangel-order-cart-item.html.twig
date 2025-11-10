@@ -1,0 +1,14 @@
+{#
+ # Renders a single cart item row with editable quantity.
+ #}
+{% set item_classes = ['sangel-order-cart-item'] %}
+<div{{ attributes.addClass(item_classes) }}>
+  <div class="sangel-order-cart-item__product">{{ title }}</div>
+  <div class="sangel-order-cart-item__unit">{{ unit_price }}</div>
+  <div class="sangel-order-cart-item__quantity">
+    <span class="sangel-order-cart-item__quantity-label">{{ 'Quantity'|t }}</span>
+    {{ quantity }}
+  </div>
+  <div class="sangel-order-cart-item__subtotal">{{ subtotal }}</div>
+  <div class="sangel-order-cart-item__actions">{{ remove }}</div>
+</div>

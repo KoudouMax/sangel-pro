@@ -1,0 +1,7 @@
+{% embed '@sangelpro_theme/layout/page--gestion.html.twig' with {
+  show_back_link: true
+} %}
+	{% block content %}
+		{{ drupal_view('product_catalog', 'for_current_user') }}
+	{% endblock %}
+{% endembed %}

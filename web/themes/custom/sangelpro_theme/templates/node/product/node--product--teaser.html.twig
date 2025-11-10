@@ -1,0 +1,64 @@
+{% set image_url = node.field_image_url.value ?? '' %}
+{% set price = node.field_price.value is not empty ? node.field_price.value|number_format(0, ',', ' ') : '' %}
+{% set sku = node.field_sku.value ?? '' %}
+{% set client_type = node.field_client_type.entity ? node.field_client_type.entity.label : '' %}
+{% set has_price = price is not empty %}
+{% set has_meta = sku or client_type %}
+
+{% set product_id = node.id() %}
+{% set url = path('entity.node.canonical', {'node': product_id}) %}
+{% set cart_add_url = path('sangel_order.cart_add', {'node': product_id}) %}
+{% set catalog_add_url = path('sangel_product.catalog_add', {'node': product_id}) %}
+{% set already_in_catalog = is_in_catalog(product_id) %}
+
+{{ attach_library('sangelpro_theme/product-actions') }}
+
+
+<article{{ attributes.addClass('sangel-card sangel-card--product') }}>
+  <a class="sangel-card__media" href="{{ url }}">
+    {% if image_url %}
+      <img src="{{ image_url|escape }}" alt="{{ label|escape }}" loading="lazy"/>
+    {% else %}
+      <div class="sangel-card__placeholder" aria-hidden="true"></div>
+    {% endif %}
+  </a>
+
+  <div class="sangel-card__content">
+    <div class="sangel-card__slot sangel-card__slot--title">
+      <h3 class="sangel-card__title">
+        <a href="{{ url }}">{{ label }}</a>
+      </h3>
+    </div>
+
+    <div class="sangel-card__slot sangel-card__slot--price{{ not has_price ? ' is-empty' }}">
+      <div class="sangel-card__price{{ not has_price ? ' sangel-card__price--empty' }}"{% if not has_price %} aria-hidden="true"{% endif %}>
+        {{ has_price ? price ~ ' F CFA' : '—' }}
+      </div>
+    </div>
+
+    <div class="sangel-card__slot sangel-card__slot--meta{{ not has_meta ? ' is-empty' }}">
+      <div class="sangel-card__meta">
+        {% if sku %}
+          <span class="sangel-card__sku">{{ sku }}</span>
+        {% endif %}
+        {# {% if client_type %}
+          <span class="sangel-card__tag">{{ client_type }}</span>
+        {% endif %} #}
+        {% if not has_meta %}
+          <span class="sangel-card__meta-placeholder" aria-hidden="true">—</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="sangel-card__slot sangel-card__slot--actions">
+      <div class="sangel-card__actions">
+        <a href="{{ cart_add_url }}" class="sangel-card__button sangel-card__button--ajax" data-sangel-ajax-url="{{ cart_add_url }}" data-sangel-counter="#sangel-order-cart-count">
+          {{ 'Ajouter au panier'|t }}
+        </a>
+        <a href="{{ catalog_add_url }}" class="sangel-card__button sangel-card__button--secondary sangel-card__button--ajax {{ already_in_catalog ? 'is-disabled' }}" data-sangel-ajax-url="{{ catalog_add_url }}" data-sangel-counter="#sangel-product-catalog-count"{% if already_in_catalog %} aria-disabled="true" tabindex="-1" data-sangel-ajax-url=""{% endif %}>
+          {{ already_in_catalog ? 'Déjà dans ma sélection'|t : 'Ajouter à mon catalogue'|t }}
+        </a>
+      </div>
+    </div>
+  </div>
+</article>

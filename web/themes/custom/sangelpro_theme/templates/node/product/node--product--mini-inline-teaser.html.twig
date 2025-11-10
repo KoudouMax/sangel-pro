@@ -1,0 +1,71 @@
+{% set label = node.label() %}
+{% set image_url = node.field_image_url.value ?? '' %}
+{% set price = node.field_price.value is not empty ? node.field_price.value|number_format(0, ',', ' ') : '' %}
+{% set sku = node.field_sku.value ?? '' %}
+{% set client_type = node.field_client_type.entity ? node.field_client_type.entity.label : '' %}
+{% set family_label = node.field_family.entity ? node.field_family.entity.label : '' %}
+{% set sub_family_label = node.field_sub_family.entity ? node.field_sub_family.entity.label : '' %}
+{% set has_price = price is not empty %}
+
+{% set product_id = node.id() %}
+{% set url = path('entity.node.canonical', {'node': product_id}) %}
+{% set catalog_remove_target = 'catalog-item-' ~ product_id %}
+{% set route_node = app.request ? app.request.attributes.get('node') : null %}
+{% set is_export_context = route_node and route_node.bundle() == 'export' %}
+
+{{ attach_library('sangelpro_theme/product-actions') }}
+
+{% set classes = ['sangel-export-item', 'sangel-export-item--compact'] %}
+{% if is_export_context %}
+  {% set classes = classes|merge(['sangel-export-item--static']) %}
+{% endif %}
+
+{% set attributes = attributes.addClass(classes).setAttribute('id', catalog_remove_target) %}
+
+<article{{ attributes }}>
+  <div class="sangel-export-item__image">
+    <a href="{{ url }}" class="sangel-export-item__image-link">
+      {% if image_url %}
+        <img src="{{ image_url|escape }}" alt="{{ label|escape }}" loading="lazy"/>
+      {% else %}
+        <span aria-hidden="true">{{ 'Image'|t }}</span>
+      {% endif %}
+    </a>
+  </div>
+
+  <div class="sangel-export-item__body">
+    <div class="sangel-export-item__title-line">
+      <a href="{{ url }}" class="sangel-export-item__title">{{ label }}</a>
+      {% if sku %}
+        <span class="sangel-export-item__sku">{{ sku }}</span>
+      {% endif %}
+    </div>
+
+    <div class="sangel-export-item__details">
+      {% if has_price %}
+        <span class="sangel-export-item__price">{{ price }}&nbsp;F&nbsp;CFA</span>
+      {% endif %}
+    </div>
+
+    <ul class="sangel-export-item__meta">
+      {% if client_type %}
+        <li class="sangel-export-item__meta-item">
+          <span class="sangel-export-item__meta-label">{{ 'Client'|t }}</span>
+          <span class="sangel-export-item__meta-value">{{ client_type }}</span>
+        </li>
+      {% endif %}
+      {% if family_label %}
+        <li class="sangel-export-item__meta-item">
+          <span class="sangel-export-item__meta-label">{{ 'Famille'|t }}</span>
+          <span class="sangel-export-item__meta-value">{{ family_label }}</span>
+        </li>
+      {% endif %}
+      {% if sub_family_label %}
+        <li class="sangel-export-item__meta-item">
+          <span class="sangel-export-item__meta-label">{{ 'Sous-famille'|t }}</span>
+          <span class="sangel-export-item__meta-value">{{ sub_family_label }}</span>
+        </li>
+      {% endif %}
+    </ul>
+  </div>
+</article>

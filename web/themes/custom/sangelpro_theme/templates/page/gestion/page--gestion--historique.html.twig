@@ -1,0 +1,7 @@
+{% embed '@sangelpro_theme/layout/page--gestion.html.twig' with { show_back_link: false, title: 'Mon historique'|t } %}
+
+	{% block content %}
+		{{ drupal_view('export', 'history') }}
+	{% endblock %}
+
+{% endembed %}

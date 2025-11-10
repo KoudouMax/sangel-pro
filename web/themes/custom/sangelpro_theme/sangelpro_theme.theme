@@ -1,0 +1,577 @@
+<?php
+
+/**
+ * @file
+ * Theme hooks and preprocess functions for the SangelPro theme.
+ */
+
+use Drupal\Component\Utility\Html;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\Template\Attribute;
+use Drupal\Core\Render\Markup;
+use Drupal\Core\Url;
+use Drupal\node\Entity\Node;
+use Drupal\node\NodeInterface;
+use Drupal\sangelpro_theme\Form\OrderStatusForm;
+use Drupal\views\Views;
+
+/**
+ * Implements hook_theme().
+ */
+function sangelpro_theme_theme($existing, $type, $theme, $path): array {
+  return [
+    'sangel_header_counter' => [
+      'template' => 'components/header-counter',
+      'variables' => [
+        'counter' => 0,
+        'label' => '',
+        'icon' => 'heart',
+        'url' => NULL,
+        'attributes' => NULL,
+      ],
+    ],
+  ];
+}
+
+/**
+ * Converts a raw identifier into a safe theme suggestion fragment.
+ */
+function sangelpro_theme_theme_fragment(string $value): string {
+  $sanitized = Html::cleanCssIdentifier($value);
+  $sanitized = str_replace('-', '_', strtolower($sanitized));
+  $sanitized = preg_replace('/[^a-z0-9_]+/', '_', $sanitized);
+  return trim($sanitized, '_');
+}
+
+/**
+ * Adds contextual information about the current user.
+ */
+function sangelpro_theme_add_user_context(array &$variables, ?AccountProxyInterface $account = NULL): void {
+  $account = $account ?: \Drupal::currentUser();
+  if (!$account) {
+    return;
+  }
+
+  $roles = $account->getRoles();
+  $variables['user_roles'] = $roles;
+  $variables['is_authenticated'] = $account->isAuthenticated();
+  $variables['is_client'] = in_array('client', $roles, TRUE);
+  $variables['is_commercial'] = in_array('commercial', $roles, TRUE);
+}
+
+/**
+ * Preprocesses the header counter component.
+ */
+function sangelpro_theme_preprocess_sangel_header_counter(array &$variables): void {
+  $variables['counter'] = (int) ($variables['counter'] ?? 0);
+  $variables['has_counter'] = $variables['counter'] > 0;
+
+  $attributes = $variables['attributes'] ?? new Attribute();
+  if (!$attributes instanceof Attribute) {
+    $attributes = new Attribute((array) $attributes);
+  }
+  $variables['attributes'] = $attributes;
+
+  if (!empty($variables['url']) && $variables['url'] instanceof Url) {
+    $variables['url'] = $variables['url']->toString();
+  }
+
+  $variables['url'] = $variables['url'] ?: NULL;
+  $variables['icon'] = $variables['icon'] ?: 'heart';
+}
+
+/**
+ * Implements hook_preprocess_page().
+ */
+function sangelpro_theme_preprocess_page(array &$variables): void {
+
+  _sangelpro_theme_preprocess_page($variables);
+
+  $variables['attributes'] = $variables['attributes'] instanceof Attribute ? $variables['attributes'] : new Attribute($variables['attributes'] ?? []);
+  $variables['attributes']->addClass('min-h-screen', 'flex', 'flex-col', 'bg-sangel-ice');
+  sangelpro_theme_add_user_context($variables);
+
+  try {
+    $variables['current_route_name'] = \Drupal::routeMatch()->getRouteName() ?: '';
+  }
+  catch (\Throwable $exception) {
+    $variables['current_route_name'] = '';
+  }
+
+  $available_export_routes = [
+    'sangel_core.manage_selections',
+    'sangel_core.client_catalogue',
+  ];
+
+  if (in_array($variables['current_route_name'], $available_export_routes, TRUE)) {
+    $request = \Drupal::request();
+    $export_link = sangelpro_theme_resolve_selection_export_link($request ? $request->query->all() : []);
+    if (!empty($export_link['url'])) {
+      $variables['print_label'] = t('Exporter (CSV)');
+      $variables['print_url'] = $export_link['url'];
+      $variables['print_format'] = $export_link['format'];
+    }
+  }
+
+  if (!empty($variables['is_authenticated']) && $variables['is_authenticated']) {
+    $account = \Drupal::currentUser();
+    $variables['order_history_url'] = Url::fromRoute('sangel_order.user_orders', ['user' => $account->id()])->toString();
+  }
+  else {
+    $variables['order_history_url'] = NULL;
+  }
+
+  $variables['counter_cart'] = 0;
+  $variables['counter_selection'] = 0;
+
+  try {
+    /** @var \Drupal\sangel_order\Service\CartManager $cart_manager */
+    $cart_manager = \Drupal::service('sangel_order.cart_manager');
+    $variables['counter_cart'] = (int) $cart_manager->getItemCount();
+  }
+  catch (\Exception $exception) {
+    \Drupal::logger('sangelpro_theme')->error('Unable to load cart counter: @message', ['@message' => $exception->getMessage()]);
+  }
+
+  try {
+    /** @var \Drupal\sangel_product\Service\CatalogSelectionManager $selection_manager */
+    $selection_manager = \Drupal::service('sangel_product.catalog_selection_manager');
+    $variables['counter_selection'] = (int) $selection_manager->getItemCount();
+  }
+  catch (\Exception $exception) {
+    \Drupal::logger('sangelpro_theme')->error('Unable to load selection counter: @message', ['@message' => $exception->getMessage()]);
+  }
+
+  try {
+    $variables['support_mail'] = (string) \Drupal::config('system.site')->get('mail');
+  }
+  catch (\Throwable $exception) {
+    $variables['support_mail'] = '';
+  }
+}
+
+/**
+ * Builds the export link for the selection page using the Views feed icon.
+ */
+function sangelpro_theme_resolve_selection_export_link(array $query): array {
+  $view = Views::getView('product_catalog');
+  if (!$view) {
+    return [];
+  }
+
+  try {
+    $view->setDisplay('for_current_user');
+  }
+  catch (\InvalidArgumentException $exception) {
+    $view->destroy();
+    return [];
+  }
+
+  if (!empty($query)) {
+    $view->setExposedInput($query);
+  }
+
+  $view->preExecute();
+  $view->execute();
+
+  $export = reset($view->feedIcons);
+  $view->destroy();
+
+  if (!is_array($export) || empty($export['#url'])) {
+    return [];
+  }
+
+  return [
+    'url' => $export['#url'],
+    'format' => $export['#format'] ?? NULL,
+  ];
+}
+
+/**
+ * Implements hook_preprocess_node().
+ */
+function sangelpro_theme_preprocess_node(array &$variables): void {
+  sangelpro_theme_add_user_context($variables);
+
+  $node = $variables['node'] ?? NULL;
+  if ($node instanceof NodeInterface && $node->bundle() === 'order') {
+    $account = \Drupal::currentUser();
+
+    $variables['order_owner_id'] = (int) $node->getOwnerId();
+    $variables['order_owner_name'] = $node->getOwner() ? $node->getOwner()->getDisplayName() : '';
+
+    $can_manage_status = sangelpro_theme_can_manage_order_status($account);
+    $variables['can_manage_order_status'] = $can_manage_status;
+    $variables['can_view_client_history'] = $can_manage_status || $account->hasPermission('view all sangel orders') || $account->hasPermission('administer sangel orders');
+
+    $variables['order_status_form'] = $can_manage_status
+      ? \Drupal::formBuilder()->getForm(OrderStatusForm::class, $node)
+      : NULL;
+  }
+
+  if ($node instanceof NodeInterface && $node->bundle() === 'export') {
+    $account = \Drupal::currentUser();
+    $can_create_export = $account->hasPermission('create export content');
+    $can_edit_export = (bool) $node->access('update', $account, TRUE)->isAllowed();
+
+    $variables['can_create_export'] = $can_create_export;
+    $variables['add_export_url'] = $can_create_export ? Url::fromRoute('node.add', ['node_type' => 'export'])->toString() : '';
+
+    $variables['can_edit_export'] = $can_edit_export;
+    $variables['edit_export_url'] = $can_edit_export ? Url::fromRoute('entity.node.edit_form', ['node' => $node->id()])->toString() : '';
+  }
+}
+
+/**
+ * Implements hook_preprocess_block().
+ */
+function sangelpro_theme_preprocess_block(array &$variables): void {
+  sangelpro_theme_add_user_context($variables);
+}
+
+/**
+ * Implements hook_preprocess_menu().
+ */
+function sangelpro_theme_preprocess_menu(array &$variables): void {
+  sangelpro_theme_add_user_context($variables);
+}
+
+/**
+ * Alters exposed forms.
+ */
+function sangelpro_theme_form_views_exposed_form_alter(array &$form, FormStateInterface $form_state, $form_id): void {
+  $form_object = $form_state->getFormObject();
+  if (!method_exists($form_object, 'getView')) {
+    return;
+  }
+
+  $view = $form_object->getView();
+  if (!$view || $view->id() !== 'frontpage') {
+    return;
+  }
+
+  if (isset($form['actions']['submit'])) {
+    $form['actions']['submit']['#attributes']['class'][] = 'sangel-search__submit';
+    $form['actions']['submit']['#value'] = t('Rechercher');
+  }
+
+  if (isset($form['actions']['#attributes'])) {
+    $form['actions']['#attributes']['class'][] = 'sangel-search__actions';
+  }
+  else {
+    $form['actions']['#attributes'] = ['class' => ['sangel-search__actions']];
+  }
+
+  if (isset($form['actions']['reset'])) {
+    unset($form['actions']['reset']);
+  }
+
+  if (isset($form['title'])) {
+    $form['title']['#attributes']['placeholder'] = $form['title']['#attributes']['placeholder'] ?? t('Recherche de produit');
+    $form['title']['#title_display'] = 'invisible';
+    $form['title']['#attributes']['class'][] = 'sangel-search__input-field';
+    unset($form['title']['#description']);
+    unset($form['title']['#prefix'], $form['title']['#suffix']);
+  }
+}
+
+/**
+ * Adds the global Sangel form skin to every form.
+ */
+function sangelpro_theme_form_alter(array &$form, FormStateInterface $form_state, $form_id): void {
+  $form['#attributes'] = isset($form['#attributes']) && is_array($form['#attributes']) ? $form['#attributes'] : [];
+
+  $classes = $form['#attributes']['class'] ?? [];
+  if (!is_array($classes)) {
+    $classes = array_filter(is_string($classes) ? preg_split('/\s+/', $classes) : []);
+  }
+
+  if (in_array('sangel-search', $classes, TRUE)) {
+    $form['#attributes']['class'] = $classes;
+    return;
+  }
+
+  if (!in_array('sp-form', $classes, TRUE)) {
+    $classes[] = 'sp-form';
+  }
+
+  $form['#attributes']['class'] = $classes;
+  $form['#attributes']['data-sp-form-skin'] = $form['#attributes']['data-sp-form-skin'] ?? 'card';
+}
+
+/**
+ * Implements hook_theme_suggestions_form_alter().
+ */
+function sangelpro_theme_theme_suggestions_form_alter_____(array &$suggestions, array $variables): void {
+  $suggestions[] = 'form__spro';
+
+  if (!empty($variables['element']['#form_id'])) {
+    $fragment = sangelpro_theme_theme_fragment($variables['element']['#form_id']);
+    if ($fragment !== '') {
+    $suggestions[] = 'form__spro__' . $fragment;
+  }
+  }
+
+  $suggestions = array_values(array_unique($suggestions));
+}
+
+/**
+ * Implémente hook_theme_suggestions_HOOK_alter() pour les formulaires.
+ *
+ * Permet d'ajouter des suggestions de template Twig :
+ *   - form--{form-id}.html.twig               (ex: form--user-login-form.html.twig)
+ *   - form--views-exposed-form--{view}--{display}.html.twig
+ *   - form--route--{route-name}.html.twig
+ */
+function sangelpro_theme_theme_suggestions_form_alter(array &$suggestions, array $variables) {
+  // 1) ID du formulaire (clé universelle).
+  $element  = $variables['element'] ?? [];
+  $form_id  = $element['#form_id'] ?? NULL;         // ex: 'user_login_form', 'views_exposed_form'
+  $html_id  = $element['#id'] ?? NULL;              // ex: 'views-exposed-form-products-page-1'
+  $route    = \Drupal::routeMatch()->getRouteName(); // ex: 'view.products.page_1' ou 'user.login'
+
+  // Helper: ajoute une suggestion si la valeur existe.
+  $add = static function(string $base, ?string $suffix = NULL) use (&$suggestions) {
+    $safe = $suffix ? $base . '__' . $suffix : $base;
+    $suggestions[] = $safe;
+  };
+
+  // 2) Suggestion générique par form_id → form--{form-id}.html.twig
+  // (Dans le nom de fichier Twig, les underscores deviennent des tirets.)
+  if ($form_id) {
+    $add('form', $form_id);
+    // Exemples de fichiers cibles possibles :
+    //   form--user-login-form.html.twig
+    //   form--node-article-form.html.twig
+    //   form--views-exposed-form.html.twig
+  }
+
+  // 3) Cas spécial : Views Exposed Form
+  // On ajoute une suggestion plus précise à partir de l'#id HTML :
+  // 'views-exposed-form-{view-machine-name}-{display-id}'
+  if ($form_id === 'views_exposed_form' && $html_id) {
+    // Convertit l'id HTML en version "suggestion" (underscores).
+    // Exemple html_id: views-exposed-form-products-page-1
+    // → suggestion :   form__views_exposed_form__products__page_1
+    $specific = strtr($html_id, ['-' => '_']); // views_exposed_form_products_page_1
+    // Retire le préfixe 'views_exposed_form_' si présent.
+    $specific = preg_replace('/^views_exposed_form_/', '', $specific);
+    if (!empty($specific)) {
+      $add('form__views_exposed_form', $specific);
+      // Fichier cible :
+      // form--views-exposed-form--products--page-1.html.twig
+    }
+  }
+
+  // 4) Suggestion basée sur la route (pratique pour commerce checkout, etc.)
+  if (!empty($route)) {
+    $route_suggestion = strtr($route, ['.' => '_', '-' => '_']);
+    $add('form__route', $route_suggestion);
+    // Fichier cible :
+    // form--route--view-products-page_1.html.twig
+    // form--route--user-login.html.twig
+    // form--route--entity-node-edit-form.html.twig
+  }
+}
+
+/**
+ * Implements hook_theme_suggestions_input_alter().
+ */
+function sangelpro_theme_theme_suggestions_input_alter(array &$suggestions, array $variables): void {
+  $suggestions[] = 'input__spro';
+
+  $type = $variables['attributes']['type'] ?? $variables['element']['#type'] ?? NULL;
+  if (is_array($type)) {
+    $type = reset($type);
+  }
+
+  if (is_string($type) && $type !== '') {
+    $fragment = sangelpro_theme_theme_fragment($type);
+    if ($fragment !== '') {
+      $suggestions[] = 'input__spro__' . $fragment;
+    }
+  }
+
+  $suggestions = array_values(array_unique($suggestions));
+}
+
+/**
+ * Implements hook_theme_suggestions_block_alter().
+ */
+function sangelpro_theme_theme_suggestions_block_alter(array &$suggestions, array $variables): void {
+  $suggestions[] = 'block__spro';
+
+  if (!empty($variables['elements']['#base_plugin_id'])) {
+    $fragment = sangelpro_theme_theme_fragment($variables['elements']['#base_plugin_id']);
+    if ($fragment !== '') {
+      $suggestions[] = 'block__spro__' . $fragment;
+    }
+  }
+
+  if (!empty($variables['elements']['#derivative_plugin_id'])) {
+    $fragment = sangelpro_theme_theme_fragment($variables['elements']['#derivative_plugin_id']);
+    if ($fragment !== '') {
+      $suggestions[] = 'block__spro__' . $fragment;
+    }
+  }
+
+  $suggestions = array_values(array_unique($suggestions));
+}
+
+/**
+ * Alters the user login form.
+ */
+function sangelpro_theme_form_user_login_form_alter(array &$form, FormStateInterface $form_state, $form_id): void {
+  $form['#attributes']['class'][] = 'auth-shell__form-shell';
+
+  if (isset($form['name'])) {
+    $form['name']['#title'] = t('Nom utilisateur');
+    $form['name']['#title_display'] = 'invisible';
+    $form['name']['#attributes']['placeholder'] = t('Nom utilisateur');
+    $form['name']['#attributes']['class'][] = 'auth-shell__input';
+  }
+
+  if (isset($form['pass'])) {
+    $form['pass']['#title'] = t('Mot de passe');
+    $form['pass']['#title_display'] = 'invisible';
+    $form['pass']['#attributes']['placeholder'] = t('Mot de passe');
+    $form['pass']['#attributes']['class'][] = 'auth-shell__input';
+  }
+
+  if (isset($form['actions']['submit'])) {
+    $form['actions']['#attributes']['class'][] = 'auth-shell__actions';
+    $form['actions']['submit']['#value'] = t('Connexion');
+    $form['actions']['submit']['#attributes']['class'][] = 'auth-shell__submit';
+  }
+}
+
+/**
+ * Alters the forgot password form.
+ */
+function sangelpro_theme_form_user_pass_form_alter(array &$form, FormStateInterface $form_state, $form_id): void {
+  $form['#attributes']['class'][] = 'auth-shell__form-shell';
+
+  if (isset($form['name'])) {
+    $form['name']['#title'] = t('Adresse e-mail ou nom d’utilisateur');
+    $form['name']['#title_display'] = 'invisible';
+    $form['name']['#attributes']['placeholder'] = t('Adresse e-mail ou nom d’utilisateur');
+    $form['name']['#attributes']['class'][] = 'auth-shell__input';
+  }
+
+  if (isset($form['actions']['submit'])) {
+    $form['actions']['#attributes']['class'][] = 'auth-shell__actions';
+    $form['actions']['submit']['#value'] = t('Envoyer le lien de réinitialisation');
+    $form['actions']['submit']['#attributes']['class'][] = 'auth-shell__submit';
+  }
+}
+
+/**
+ * Adds custom classes to the rendered login form.
+ */
+function sangelpro_theme_preprocess_user_login_form(array &$variables): void {
+  if (isset($variables['form']['name'])) {
+    $variables['form']['name']['#attributes']['class'][] = 'auth-shell__input';
+  }
+  if (isset($variables['form']['pass'])) {
+    $variables['form']['pass']['#attributes']['class'][] = 'auth-shell__input';
+  }
+}
+
+
+/**
+ * Implements hook_preprocess_page().
+ */
+function _sangelpro_theme_preprocess_page(array &$variables) {
+  $request = \Drupal::request();
+  $site_root = $request->getSchemeAndHttpHost();
+  $current_uri = $request->getRequestUri();
+  $current_abs = $site_root . $request->getRequestUri();
+  $login_path = Url::fromRoute('user.login')->toString();
+
+  if (\Drupal::service('path.matcher')->isFrontPage()) {
+    $variables['back_href'] = NULL;
+    return;
+  }
+
+  $route_name = \Drupal::routeMatch()->getRouteName();
+  if (in_array($route_name, [
+    'sangel_core.manage_clients_account',
+  ], TRUE)) {
+    $variables['back_href'] = NULL;
+    return;
+  }
+
+  $candidate = $variables['gestion_back_link'] ?? '';
+
+  if (!$candidate) {
+    $candidate = (string) $request->headers->get('referer', '');
+  }
+
+  $back_href = NULL;
+  $candidate = trim((string) $candidate);
+  if ($candidate !== '') {
+    $normalized = _sangelpro_theme_normalize_back_href($candidate, $site_root);
+
+    if ($normalized !== NULL) {
+      $path_only = parse_url($normalized, PHP_URL_PATH) ?? '';
+      if ($path_only === $login_path) {
+        $normalized = NULL;
+      }
+    }
+
+    if ($normalized !== NULL) {
+      $comparison_target = strtok($normalized, '#') ?: $normalized;
+      if ($comparison_target === $current_uri || ($site_root . $comparison_target) === $current_abs) {
+        $normalized = NULL;
+      }
+    }
+
+    $back_href = $normalized;
+  }
+
+  $variables['back_href'] = $back_href;
+}
+
+/**
+ * Normalises a potential back link to a safe internal href.
+ */
+function _sangelpro_theme_normalize_back_href(string $candidate, string $site_root): ?string {
+  $candidate = trim($candidate);
+  if ($candidate === '') {
+    return NULL;
+  }
+
+  if (str_starts_with($candidate, $site_root)) {
+    $candidate = substr($candidate, strlen($site_root));
+    if ($candidate === '') {
+      return '/';
+    }
+  }
+
+  if (str_starts_with($candidate, '//')) {
+    return NULL;
+  }
+
+  if (!str_starts_with($candidate, '/')) {
+    if ($candidate !== '' && in_array($candidate[0], ['?', '#'], TRUE)) {
+      $candidate = '/' . $candidate;
+    }
+    else {
+      return NULL;
+    }
+  }
+
+  return $candidate;
+}
+
+/**
+ * Checks if the current user can manage order status.
+ */
+function sangelpro_theme_can_manage_order_status(AccountProxyInterface $account): bool {
+  if ($account->hasPermission('administer sangel orders') || $account->hasPermission('view all sangel orders')) {
+    return TRUE;
+  }
+
+  return in_array('commercial', $account->getRoles(), TRUE);
+}

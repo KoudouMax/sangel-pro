@@ -1,0 +1,4 @@
+early_enable: false
+date_format: '[c]'
+use_kint_trace_in_devel: true
+rich_theme: 'original.css'

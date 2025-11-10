@@ -1,0 +1,9 @@
+name: "Sangel Core Base"
+type: module
+description: "Provides base controllers and placeholders for Sangel Core."
+core_version_requirement: ^10 || ^11
+package: Sangel
+dependencies:
+  - sangel_core:sangel_core
+  - sangel_core:sangel_order
+  - views_data_export:views_data_export

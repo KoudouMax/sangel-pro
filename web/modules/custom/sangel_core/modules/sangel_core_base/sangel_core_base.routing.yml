@@ -1,0 +1,163 @@
+sangel_core.client_cart:
+  path: "/compte-clients/panier"
+  defaults:
+    _controller: '\Drupal\sangel_core_base\Controller\ClientPageController::clientCart'
+    _title: "Panier client"
+  requirements:
+    _user_is_logged_in: "TRUE"
+
+sangel_core.client_catalogue:
+  path: "/compte-clients/catalogues"
+  defaults:
+    _controller: '\Drupal\sangel_core_base\Controller\ClientPageController::clientCatalog'
+    _title: "Catalogue client"
+  requirements:
+    _user_is_logged_in: "TRUE"
+
+sangel_core.client_order_history:
+  path: "/compte-clients/historique-commandes"
+  defaults:
+    _controller: '\Drupal\sangel_core_base\Controller\ClientPageController::clientOrderHistory'
+    _title: "Historique des commandes client"
+  requirements:
+    _user_is_logged_in: "TRUE"
+
+sangel_core.manage_clients_account:
+  path: "/gestion/clients"
+  defaults:
+    _controller: '\Drupal\sangel_core_base\Controller\ClientPageController::manageClientsAccount'
+    _title: "Gestion des comptes clients"
+  requirements:
+    _permission: "administer sangel core"
+
+sangel_core.manage_catalogs:
+  path: "/gestion/catalogues"
+  defaults:
+    _controller: '\Drupal\sangel_core_base\Controller\ClientPageController::manageCatalogs'
+    _title: "Gestion des catalogues"
+  requirements:
+    _permission: "administer sangel core"
+
+sangel_core.manage_selections:
+  path: "/gestion/selection"
+  defaults:
+    _controller: '\Drupal\sangel_core_base\Controller\ClientPageController::manageSelections'
+    _title: "Gestion des sélections"
+  requirements:
+    _permission: "administer sangel core"
+
+sangel_core.manage_history:
+  path: "/gestion/historique"
+  defaults:
+    _controller: '\Drupal\sangel_core_base\Controller\ClientPageController::manageHistory'
+    _title: "Historique"
+  requirements:
+    _permission: "administer sangel core"
+
+sangel_core.manage_profile:
+  path: "/gestion/profil"
+  defaults:
+    _controller: '\Drupal\sangel_core_base\Controller\ClientPageController::manageProfile'
+    _title: "Gestion du profil"
+  requirements:
+    _permission: "administer sangel core"
+
+sangel_core.manage_clients_create:
+  path: "/gestion/clients/ajouter"
+  defaults:
+    _controller: '\Drupal\sangel_core_base\Controller\ClientPageController::manageClientsCreate'
+    _title: "Créer un client"
+  requirements:
+    _permission: "administer sangel core"
+
+sangel_core.manage_clients_edit:
+  path: "/gestion/clients/{node}/modifier"
+  defaults:
+    _controller: '\Drupal\sangel_core_base\Controller\ClientPageController::manageClientsEdit'
+  requirements:
+    _entity_access: "node.update"
+    _permission: "administer sangel core"
+  options:
+    parameters:
+      node:
+        type: entity:node
+
+sangel_core.manage_clients_orders:
+  path: "/gestion/clients/{node}/commandes"
+  defaults:
+    _controller: '\Drupal\sangel_core_base\Controller\ClientPageController::manageClientsOrders'
+  requirements:
+    _entity_access: "node.view"
+    _permission: "administer sangel core"
+  options:
+    parameters:
+      node:
+        type: entity:node
+
+sangel_core.manage_clients_cart_page:
+  path: "/gestion/clients/{node}/panier"
+  defaults:
+    _controller: '\Drupal\sangel_core_base\Controller\ClientPageController::manageClientsCartPage'
+  requirements:
+    _entity_access: "node.view"
+    _permission: "administer sangel core"
+  options:
+    parameters:
+      node:
+        type: entity:node
+
+sangel_core.manage_clients_catalogs_page:
+  path: "/gestion/clients/{node}/catalogues"
+  defaults:
+    _controller: '\Drupal\sangel_core_base\Controller\ClientPageController::manageClientsCatalogsPage'
+  requirements:
+    _entity_access: "node.view"
+    _permission: "administer sangel core"
+  options:
+    parameters:
+      node:
+        type: entity:node
+
+sangel_core.manage_clients_profile_page:
+  path: "/gestion/clients/{node}/fiche"
+  defaults:
+    _controller: '\Drupal\sangel_core_base\Controller\ClientPageController::manageClientsProfilePage'
+  requirements:
+    _entity_access: "node.view"
+    _permission: "administer sangel core"
+  options:
+    parameters:
+      node:
+        type: entity:node
+
+sangel_core.export_catalog_csv:
+  path: "/compte-clients/export/csv/{view_id}/{display_id}"
+  defaults:
+    _controller: '\Drupal\sangel_core_base\Controller\AccountExportController::exportCatalogView'
+    _title: "Export CSV"
+    view_id: "product_catalog"
+    display_id: "for_current_user"
+  requirements:
+    _user_is_logged_in: "TRUE"
+    view_id: "[A-Za-z0-9_]+"
+    display_id: "[A-Za-z0-9_]+"
+
+sangel_core.export_orders_csv:
+  path: "/compte-clients/historique-commandes/export/csv"
+  defaults:
+    _controller: '\Drupal\sangel_core_base\Controller\AccountExportController::exportOrders'
+    _title: "Export CSV"
+  requirements:
+    _user_is_logged_in: "TRUE"
+
+sangel_core.export_products_node_csv:
+  path: "/compte-clients/export/csv/products/{node}"
+  defaults:
+    _controller: '\Drupal\sangel_core_base\Controller\AccountExportController::exportProductsFromNode'
+    _title: "Export CSV"
+  requirements:
+    _user_is_logged_in: "TRUE"
+  options:
+    parameters:
+      node:
+        type: entity:node

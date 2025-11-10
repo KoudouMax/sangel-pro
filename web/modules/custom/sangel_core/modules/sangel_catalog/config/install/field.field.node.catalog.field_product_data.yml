@@ -1,0 +1,21 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_product_data
+    - node.type.catalog
+  module:
+    - text
+id: node.catalog.field_product_data
+field_name: field_product_data
+entity_type: node
+bundle: catalog
+label: 'Catalog product data'
+description: 'JSON payload storing catalog product references.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  display_summary: false
+field_type: text_long

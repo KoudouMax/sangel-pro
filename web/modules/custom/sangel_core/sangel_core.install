@@ -1,0 +1,372 @@
+<?php
+
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\node\Entity\NodeType;
+use Drupal\Core\Entity\Entity\EntityFormDisplay;
+use Drupal\Core\Entity\Entity\EntityViewDisplay;
+use Drupal\node\NodeTypeInterface;
+use Drupal\views\Entity\View;
+
+/**
+ * Create the "pub" content type for client-targeted banners.
+ */
+function sangel_core_update_9001(): void {
+  $node_type = NodeType::load('pub');
+
+  if (!$node_type instanceof NodeTypeInterface) {
+    $node_type = NodeType::create([
+      'type' => 'pub',
+      'name' => 'Pub',
+      'description' => 'Bannière publicitaire ciblée pour les clients.',
+      'new_revision' => FALSE,
+      'translatable' => FALSE,
+    ]);
+    $node_type->setThirdPartySetting('menu_ui', 'available_menus', []);
+    $node_type->setThirdPartySetting('menu_ui', 'parent', '');
+    $node_type->save();
+  }
+
+  // Attach the shared client type taxonomy field if not already attached.
+  if (!FieldConfig::loadByName('node', 'pub', 'field_client_type')) {
+    $storage = FieldStorageConfig::loadByName('node', 'field_client_type');
+    if ($storage) {
+      FieldConfig::create([
+        'field_storage' => $storage,
+        'bundle' => 'pub',
+        'label' => 'Types de client',
+        'description' => 'Sélectionnez les types de clients ciblés par cette publicité.',
+        'required' => FALSE,
+        'settings' => [
+          'handler' => 'default:taxonomy_term',
+          'handler_settings' => [
+            'target_bundles' => [
+              'client_type' => 'client_type',
+            ],
+            'auto_create' => FALSE,
+          ],
+        ],
+      ])->save();
+    }
+  }
+
+  // Field for targeting specific users.
+  if (!FieldStorageConfig::loadByName('node', 'field_target_users')) {
+    FieldStorageConfig::create([
+      'field_name' => 'field_target_users',
+      'entity_type' => 'node',
+      'type' => 'entity_reference',
+      'settings' => [
+        'target_type' => 'user',
+      ],
+      'cardinality' => FieldStorageConfig::CARDINALITY_UNLIMITED,
+      'translatable' => FALSE,
+    ])->save();
+  }
+  if (!FieldConfig::loadByName('node', 'pub', 'field_target_users')) {
+    FieldConfig::create([
+      'field_name' => 'field_target_users',
+      'entity_type' => 'node',
+      'bundle' => 'pub',
+      'label' => 'Utilisateurs ciblés',
+      'description' => 'Sélectionnez précisément les utilisateurs à qui afficher cette publicité.',
+      'required' => FALSE,
+      'settings' => [
+        'handler' => 'default:user',
+        'handler_settings' => [
+          'include_anonymous' => FALSE,
+        ],
+      ],
+    ])->save();
+  }
+
+  // Banner image field.
+  if (!FieldStorageConfig::loadByName('node', 'field_banner_image')) {
+    FieldStorageConfig::create([
+      'field_name' => 'field_banner_image',
+      'entity_type' => 'node',
+      'type' => 'image',
+      'settings' => [
+        'uri_scheme' => 'public',
+        'default_image' => NULL,
+      ],
+      'cardinality' => FieldStorageConfig::CARDINALITY_UNLIMITED,
+      'translatable' => FALSE,
+    ])->save();
+  }
+  if (!FieldConfig::loadByName('node', 'pub', 'field_banner_image')) {
+    FieldConfig::create([
+      'field_name' => 'field_banner_image',
+      'entity_type' => 'node',
+      'bundle' => 'pub',
+      'label' => 'Bannière',
+      'description' => 'Image utilisée comme bannière publicitaire.',
+      'required' => TRUE,
+      'settings' => [
+        'file_directory' => '',
+        'alt_field' => TRUE,
+        'alt_field_required' => TRUE,
+        'title_field' => FALSE,
+        'title_field_required' => FALSE,
+        'default_image' => [
+          'uuid' => NULL,
+          'alt' => '',
+          'title' => '',
+          'width' => NULL,
+          'height' => NULL,
+        ],
+      ],
+    ])->save();
+  }
+
+  // Configure form display.
+  $form_display = EntityFormDisplay::load('node.pub.default');
+  if (!$form_display) {
+    $form_display = EntityFormDisplay::create([
+      'targetEntityType' => 'node',
+      'bundle' => 'pub',
+      'mode' => 'default',
+      'status' => TRUE,
+    ]);
+  }
+
+  $form_display
+    ->setComponent('title', [
+      'type' => 'string_textfield',
+      'weight' => -10,
+    ])
+    ->setComponent('field_banner_image', [
+      'type' => 'image_image',
+      'weight' => 0,
+      'settings' => [
+        'progress_indicator' => 'throbber',
+        'preview_image_style' => 'thumbnail',
+        'show_description' => FALSE,
+      ],
+    ])
+    ->setComponent('field_client_type', [
+      'type' => 'entity_reference_autocomplete',
+      'weight' => 5,
+      'settings' => [
+        'match_operator' => 'CONTAINS',
+        'size' => 60,
+        'placeholder' => '',
+        'autocomplete_type' => 'tags',
+      ],
+    ])
+    ->setComponent('field_target_users', [
+      'type' => 'entity_reference_autocomplete',
+      'weight' => 6,
+      'settings' => [
+        'match_operator' => 'CONTAINS',
+        'size' => 60,
+        'placeholder' => '',
+        'autocomplete_type' => 'tags',
+      ],
+    ])
+    ->save();
+
+  // Configure view display.
+  $view_display = EntityViewDisplay::load('node.pub.default');
+  if (!$view_display) {
+    $view_display = EntityViewDisplay::create([
+      'targetEntityType' => 'node',
+      'bundle' => 'pub',
+      'mode' => 'default',
+      'status' => TRUE,
+    ]);
+  }
+  $view_display
+    ->setComponent('field_banner_image', [
+      'type' => 'image',
+      'label' => 'hidden',
+      'weight' => -10,
+      'settings' => [
+        'image_style' => '',
+        'image_link' => '',
+      ],
+    ])
+    ->setComponent('field_client_type', [
+      'type' => 'entity_reference_label',
+      'label' => 'above',
+      'weight' => 0,
+      'settings' => [
+        'link' => FALSE,
+      ],
+    ])
+    ->setComponent('field_target_users', [
+      'type' => 'entity_reference_label',
+      'label' => 'above',
+      'weight' => 1,
+      'settings' => [
+        'link' => FALSE,
+      ],
+    ])
+    ->save();
+
+  // Optional teaser display.
+  $teaser_display = EntityViewDisplay::load('node.pub.teaser');
+  if (!$teaser_display) {
+    $teaser_display = EntityViewDisplay::create([
+      'targetEntityType' => 'node',
+      'bundle' => 'pub',
+      'mode' => 'teaser',
+      'status' => TRUE,
+    ]);
+  }
+  $teaser_display
+    ->setComponent('field_banner_image', [
+      'type' => 'image',
+      'label' => 'hidden',
+      'weight' => -10,
+      'settings' => [
+        'image_style' => '',
+        'image_link' => 'content',
+      ],
+    ])
+    ->save();
+}
+
+/**
+ * Create the "pub" view to expose banners as a diaporama.
+ */
+function sangel_core_update_9002(): void {
+  if (View::load('pub')) {
+    return;
+  }
+
+  $langcode = \Drupal::languageManager()->getDefaultLanguage()->getId();
+
+  $view_definition = [
+    'id' => 'pub',
+    'label' => 'Publicités',
+    'module' => 'views',
+    'description' => 'Affiche les bannières publicitaires ciblées.',
+    'tag' => 'sangel',
+    'base_table' => 'node_field_data',
+    'base_field' => 'nid',
+    'core' => '8.x',
+    'status' => TRUE,
+    'langcode' => $langcode,
+    'dependencies' => [
+      'module' => ['node'],
+      'config' => ['node.type.pub'],
+    ],
+    'display' => [
+      'default' => [
+        'id' => 'default',
+        'display_plugin' => 'default',
+        'display_title' => 'Master',
+        'position' => 0,
+        'display_status' => TRUE,
+        'display_options' => [
+          'title' => 'Publicités',
+          'access' => [
+            'type' => 'perm',
+            'options' => [
+              'perm' => 'access content',
+            ],
+          ],
+          'cache' => [
+            'type' => 'tag',
+          ],
+          'query' => [
+            'type' => 'views_query',
+            'options' => [],
+          ],
+          'exposed_form' => [
+            'type' => 'basic',
+            'options' => [],
+          ],
+          'pager' => [
+            'type' => 'none',
+            'options' => [
+              'items_per_page' => 0,
+              'offset' => 0,
+            ],
+          ],
+          'style' => [
+            'type' => 'default',
+            'options' => [
+              'grouping' => [],
+              'row_class' => 'sangel-pub-slide',
+              'default_row_class' => FALSE,
+            ],
+          ],
+          'row' => [
+            'type' => 'entity:node',
+            'options' => [
+              'view_mode' => 'teaser',
+            ],
+          ],
+          'filters' => [
+            'status' => [
+              'id' => 'status',
+              'table' => 'node_field_data',
+              'field' => 'status',
+              'value' => '1',
+              'provider' => 'node',
+              'plugin_id' => 'boolean',
+              'group' => 1,
+              'exposed' => FALSE,
+            ],
+            'type' => [
+              'id' => 'type',
+              'table' => 'node_field_data',
+              'field' => 'type',
+              'value' => ['pub' => 'pub'],
+              'provider' => 'node',
+              'plugin_id' => 'bundle',
+              'group' => 1,
+              'exposed' => FALSE,
+            ],
+          ],
+          'sorts' => [
+            'created' => [
+              'id' => 'created',
+              'table' => 'node_field_data',
+              'field' => 'created',
+              'order' => 'DESC',
+              'provider' => 'node',
+              'plugin_id' => 'date',
+            ],
+          ],
+          'display_extenders' => [],
+        ],
+      ],
+      'block_1' => [
+        'id' => 'block_1',
+        'display_plugin' => 'block',
+        'display_title' => 'Diaporama pub',
+        'position' => 1,
+        'display_status' => TRUE,
+        'display_options' => [
+          'display_extenders' => [],
+          'defaults' => [
+            'filters' => TRUE,
+            'sorts' => TRUE,
+            'style' => TRUE,
+            'row' => TRUE,
+            'pager' => TRUE,
+          ],
+          'block_description' => 'Bannières publicitaires (slider)',
+          'block_category' => 'Sangel',
+          'css_class' => 'sangel-pub-slider',
+        ],
+      ],
+    ],
+  ];
+
+  View::create($view_definition)->save();
+}
+
+/**
+ * Ensure the pub banner field accepts multiple images.
+ */
+function sangel_core_update_9003(): void {
+  $storage = FieldStorageConfig::loadByName('node', 'field_banner_image');
+  if ($storage && $storage->getCardinality() !== FieldStorageConfig::CARDINALITY_UNLIMITED) {
+    $storage->setCardinality(FieldStorageConfig::CARDINALITY_UNLIMITED);
+    $storage->save();
+  }
+}

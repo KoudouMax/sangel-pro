@@ -1,0 +1,23 @@
+sangel_product.catalog_add:
+  path: "/catalog/add/{node}"
+  defaults:
+    _controller: '\Drupal\sangel_product\Controller\CatalogAjaxController::add'
+    _format: "drupal_ajax"
+  requirements:
+    _entity_access: "node.view"
+  options:
+    parameters:
+      node:
+        type: entity:node
+
+sangel_product.catalog_remove:
+  path: "/catalog/remove/{node}"
+  defaults:
+    _controller: '\Drupal\sangel_product\Controller\CatalogAjaxController::remove'
+    _format: "drupal_ajax"
+  requirements:
+    _entity_access: "node.view"
+  options:
+    parameters:
+      node:
+        type: entity:node

@@ -1,0 +1,45 @@
+{# Custom 403 page for SangelPro #}
+{% extends '@sangelpro_theme/layout/page.html.twig' %}
+
+{% set main_classes = ['mx-auto', 'flex', 'w-full', 'max-w-4xl', 'flex-col', 'items-center', 'gap-8', 'px-4', 'py-16'] %}
+
+{% block hero %}{% endblock %}
+{% block category_nav %}{% endblock %}
+{% block filters_column %}{% endblock %}
+{% block sidebar_column %}{% endblock %}
+{% block selection_panel %}{% endblock %}
+
+{% block page_title_section %}
+	<section class="mx-auto w-full max-w-4xl px-4 pt-10 text-center">
+		<p class="text-sm font-semibold uppercase tracking-[0.2em] text-sangel-primary/70">403</p>
+		<h1 class="mt-3 text-3xl font-semibold text-sangel-text md:text-4xl">{{ 'Acces refuse'|t }}</h1>
+		<p class="mt-4 text-base text-sangel-text/70">{{ "Vous n'avez pas les droits necessaires pour consulter cette page."|t }}</p>
+	</section>
+{% endblock %}
+
+{% block content_header %}{% endblock %}
+
+{% block content %}
+	<div class="flex flex-col items-center gap-8 text-center">
+		<div class="relative flex h-32 w-32 items-center justify-center rounded-full bg-sangel-primary/10 text-4xl font-semibold text-sangel-primary">
+			<span aria-hidden="true">403</span>
+			<span class="sr-only">{{ 'Erreur 403'|t }}</span>
+		</div>
+		<div class="space-y-2 text-sm text-sangel-text/70 md:text-base">
+			<p>{{ "Si vous pensez qu'il s'agit d'une erreur, contactez votre administrateur ou notre equipe support."|t }}</p>
+		</div>
+		<div class="flex flex-col gap-3 sm:flex-row">
+			<a href="{{ path('user.login') }}" class="inline-flex items-center justify-center rounded-full border border-sangel-primary px-5 py-2 text-sm font-semibold text-sangel-primary transition hover:bg-sangel-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-sangel-primary/20">
+				{{ 'Se connecter'|t }}
+			</a>
+			{% if support_mail is defined and support_mail %}
+				<a href="mailto:{{ support_mail }}" class="inline-flex items-center justify-center rounded-full border border-transparent bg-sangel-text px-5 py-2 text-sm font-semibold text-white transition hover:bg-sangel-text/90 focus:outline-none focus:ring-2 focus:ring-sangel-primary/20">
+					{{ 'Contacter le support'|t }}
+				</a>
+			{% endif %}
+		</div>
+		<a href="{{ path('<front>') }}" class="text-sm font-semibold text-sangel-text/70 underline-offset-4 transition hover:text-sangel-text hover:underline">
+			{{ "Retour a l'accueil"|t }}
+		</a>
+	</div>
+{% endblock %}

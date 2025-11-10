@@ -1,0 +1,211 @@
+{% set form = element %}
+{% set attrs = (attributes is defined ? attributes : create_attribute()).addClass('sangel-export-edit-form', 'space-y-8') %}
+{% set node = form['#node'] ?? NULL %}
+{% set export_label = node ? node.label() : (form.title['#title'] ?? 'Export'|t) %}
+
+{% set extra_fields = form|without(
+  'actions',
+  'form_build_id',
+  'form_token',
+  'form_id',
+  'title',
+  'langcode',
+  'field_export_note',
+  'field_export_file',
+  'field_export_products',
+  'field_export_catalog',
+  'field_export_context',
+  'field_export_view',
+  'field_export_display',
+  'status',
+  'moderation_state',
+  'publish_on',
+  'unpublish_on',
+  'uid',
+  'created',
+  'path',
+  'metatag',
+  'revision_information'
+) %}
+{% set extra_fields_markup = extra_fields|render|trim %}
+
+<form{{ attrs }}>
+  <div class="hidden">
+    {{ form.form_build_id }}
+    {{ form.form_token }}
+    {{ form.form_id }}
+    {{ form.langcode ?? '' }}
+  </div>
+
+  <header class="space-y-2 rounded-3xl border border-sangel-ice-strong bg-white p-6 shadow-sm">
+    <p class="text-xs font-semibold uppercase tracking-[0.3em] text-sangel-primary/70">{{ 'Gestion des exports'|t }}</p>
+    <h1 class="text-2xl font-semibold text-sangel-text md:text-3xl">{{ 'Modifier @label'|t({'@label': export_label}) }}</h1>
+    <p class="text-sm text-sangel-text/70">{{ 'Actualisez le titre, la note commerciale et les détails du fichier avant de sauvegarder.'|t }}</p>
+  </header>
+
+  <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+    <div class="space-y-6">
+      {% if form.title is defined or form.field_export_note is defined %}
+        <section class="space-y-5 rounded-3xl border border-sangel-ice-strong bg-white p-6 shadow-sm">
+          <header class="space-y-1">
+            <h2 class="text-base font-semibold text-sangel-text">{{ 'Informations principales'|t }}</h2>
+            <p class="text-xs text-sangel-text/60">{{ 'Ces champs sont visibles pour les autres utilisateurs autorisés.'|t }}</p>
+          </header>
+          <div class="space-y-5">
+            {% if form.title is defined %}
+              <div>{{ form.title }}</div>
+            {% endif %}
+            {% if form.field_export_note is defined %}
+              <div>{{ form.field_export_note }}</div>
+            {% endif %}
+          </div>
+        </section>
+      {% endif %}
+
+      {# {% if form.field_export_file is defined or form.field_export_products is defined or form.field_export_catalog is defined %}
+        <section class="space-y-5 rounded-3xl border border-sangel-ice-strong bg-white p-6 shadow-sm">
+          <header class="space-y-1">
+            <h2 class="text-base font-semibold text-sangel-text">{{ 'Contenu du fichier'|t }}</h2>
+            <p class="text-xs text-sangel-text/60">{{ 'Définissez la ressource exportée et les catalogues associés.'|t }}</p>
+          </header>
+          <div class="space-y-5">
+            {% if form.field_export_file is defined %}
+              <div>{{ form.field_export_file }}</div>
+            {% endif %}
+            {% if form.field_export_products is defined %}
+              <div>{{ form.field_export_products }}</div>
+            {% endif %}
+            {% if form.field_export_catalog is defined %}
+              <div>{{ form.field_export_catalog }}</div>
+            {% endif %}
+          </div>
+        </section>
+      {% endif %} #}
+
+      {# {% if form.field_export_view is defined or form.field_export_display is defined or form.field_export_context is defined %}
+        <section class="space-y-5 rounded-3xl border border-sangel-ice-strong bg-white p-6 shadow-sm">
+          <header class="space-y-1">
+            <h2 class="text-base font-semibold text-sangel-text">{{ 'Contexte technique'|t }}</h2>
+            <p class="text-xs text-sangel-text/60">{{ 'Informations utiles pour l’audit et le suivi des exports.'|t }}</p>
+          </header>
+          <div class="space-y-5">
+            {% if form.field_export_view is defined %}
+              <div>{{ form.field_export_view }}</div>
+            {% endif %}
+            {% if form.field_export_display is defined %}
+              <div>{{ form.field_export_display }}</div>
+            {% endif %}
+            {% if form.field_export_context is defined %}
+              <div>{{ form.field_export_context }}</div>
+            {% endif %}
+          </div>
+        </section>
+      {% endif %} #}
+
+      {# {% if extra_fields_markup %}
+        <section class="space-y-4 rounded-3xl border border-dashed border-sangel-ice-strong bg-white/80 p-6 shadow-sm">
+          <header class="space-y-1">
+            <h2 class="text-base font-semibold text-sangel-text">{{ 'Paramètres complémentaires'|t }}</h2>
+            <p class="text-xs text-sangel-text/60">{{ 'Champs additionnels fournis par les modules installés.'|t }}</p>
+          </header>
+          <div class="space-y-4">
+            {{ extra_fields_markup|raw }}
+          </div>
+        </section>
+      {% endif %} #}
+    </div>
+
+    <aside class="space-y-6">
+      {% if form.status is defined or form.moderation_state is defined or form.publish_on is defined or form.unpublish_on is defined %}
+        <section class="space-y-4 rounded-3xl border border-sangel-ice-strong bg-white p-6 shadow-sm">
+          <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-sangel-text/60">{{ 'Publication'|t }}</h2>
+          <div class="space-y-4">
+            {% if form.status is defined %}
+              <div>{{ form.status }}</div>
+            {% endif %}
+            {% if form.moderation_state is defined %}
+              <div>{{ form.moderation_state }}</div>
+            {% endif %}
+            {% if form.publish_on is defined or form.unpublish_on is defined %}
+              <div class="grid gap-3">
+                {% if form.publish_on is defined %}
+                  {{ form.publish_on }}
+                {% endif %}
+                {% if form.unpublish_on is defined %}
+                  {{ form.unpublish_on }}
+                {% endif %}
+              </div>
+            {% endif %}
+          </div>
+        </section>
+      {% endif %}
+
+      {% if form.uid is defined or form.created is defined %}
+        <section class="space-y-4 rounded-3xl border border-sangel-ice-strong bg-white p-6 shadow-sm">
+          <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-sangel-text/60">{{ 'Propriétaire & historique'|t }}</h2>
+          <div class="space-y-4">
+            {% if form.uid is defined %}
+              <div>{{ form.uid }}</div>
+            {% endif %}
+            {% if form.created is defined %}
+              <div>{{ form.created }}</div>
+            {% endif %}
+          </div>
+        </section>
+      {% endif %}
+
+      {% if form.path is defined or form.metatag is defined or form.revision_information is defined %}
+        <section class="space-y-4 rounded-3xl border border-sangel-ice-strong bg-white p-6 shadow-sm">
+          <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-sangel-text/60">{{ 'Référencement'|t }}</h2>
+          <div class="space-y-4">
+            {% if form.path is defined %}
+              <div>{{ form.path }}</div>
+            {% endif %}
+            {% if form.metatag is defined %}
+              <div>{{ form.metatag }}</div>
+            {% endif %}
+            {% if form.revision_information is defined %}
+              <div>{{ form.revision_information }}</div>
+            {% endif %}
+          </div>
+        </section>
+      {% endif %}
+    </aside>
+  </div>
+
+  <div class="hidden">
+    {{ form|without(
+      'actions',
+      'form_build_id',
+      'form_token',
+      'form_id',
+      'title',
+      'langcode',
+      'field_export_note',
+      'field_export_file',
+      'field_export_products',
+      'field_export_catalog',
+      'field_export_context',
+      'field_export_view',
+      'field_export_display',
+      'status',
+      'moderation_state',
+      'publish_on',
+      'unpublish_on',
+      'uid',
+      'created',
+      'path',
+      'metatag',
+      'revision_information'
+    ) }}
+  </div>
+
+  {% if form.actions is defined %}
+    <footer class="sticky bottom-0 left-0 right-0 z-10 bg-white/95 py-4 shadow-[0_-8px_24px_rgba(15,23,42,0.08)]">
+      <div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4">
+        <p class="text-xs text-sangel-text/60">{{ 'Enregistrez vos modifications pour les mettre à disposition des autres utilisateurs.'|t }}</p>
+        <div class="flex flex-wrap items-center gap-3">{{ form.actions }}</div>
+      </div>
+    </footer>
+  {% endif %}
+</form>

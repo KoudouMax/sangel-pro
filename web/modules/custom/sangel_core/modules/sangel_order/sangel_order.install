@@ -1,0 +1,200 @@
+<?php
+
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\node\Entity\NodeType;
+
+/**
+ * @file
+ * Install and update hooks for the Sangel Order module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function sangel_order_install(): void {
+  sangel_order_install_order_item_content_type();
+  sangel_order_install_cart_content_type();
+}
+
+/**
+ * Ensures the order item content type and fields exist.
+ *
+ * @param bool $is_update
+ *   TRUE when called from an update hook.
+ */
+function sangel_order_install_order_item_content_type(bool $is_update = FALSE): void {
+  $type = NodeType::load('order_item');
+  if (!$type) {
+    $type = NodeType::create([
+      'type' => 'order_item',
+      'name' => t('Order item'),
+      'description' => t('Stores a single line item linked to an order.'),
+      'new_revision' => FALSE,
+      'status' => FALSE,
+    ]);
+    $type->setThirdPartySetting('menu_ui', 'available_menus', []);
+    $type->save();
+  }
+
+  // Helper to create field storage if it doesn't exist.
+  $ensure_field = function (array $storage_definition, array $field_definition): void {
+    $field_storage = FieldStorageConfig::loadByName('node', $storage_definition['field_name']);
+    if (!$field_storage) {
+      $storage_definition['entity_type'] = 'node';
+      FieldStorageConfig::create($storage_definition)->save();
+    }
+    $field = FieldConfig::loadByName('node', 'order_item', $storage_definition['field_name']);
+    if (!$field) {
+      $field_definition['field_name'] = $storage_definition['field_name'];
+      $field_definition['entity_type'] = 'node';
+      $field_definition['bundle'] = 'order_item';
+      FieldConfig::create($field_definition)->save();
+    }
+  };
+
+  // Order reference.
+  $ensure_field([
+    'field_name' => 'field_order',
+    'type' => 'entity_reference',
+    'settings' => ['target_type' => 'node'],
+    'cardinality' => 1,
+  ], [
+    'label' => t('Order'),
+    'settings' => [
+      'handler' => 'default',
+      'handler_settings' => [
+        'target_bundles' => ['order' => 'order'],
+      ],
+    ],
+    'required' => TRUE,
+  ]);
+
+  // Product reference.
+  $ensure_field([
+    'field_name' => 'field_product',
+    'type' => 'entity_reference',
+    'settings' => ['target_type' => 'node'],
+    'cardinality' => 1,
+  ], [
+    'label' => t('Product'),
+    'settings' => [
+      'handler' => 'default',
+      'handler_settings' => [
+        'target_bundles' => ['product' => 'product'],
+      ],
+    ],
+    'required' => TRUE,
+  ]);
+
+  // Product title snapshot.
+  $ensure_field([
+    'field_name' => 'field_product_title',
+    'type' => 'string',
+    'settings' => ['max_length' => 255],
+  ], [
+    'label' => t('Product title'),
+  ]);
+
+  // SKU snapshot.
+  $ensure_field([
+    'field_name' => 'field_product_sku',
+    'type' => 'string',
+    'settings' => ['max_length' => 255],
+  ], [
+    'label' => t('Product SKU'),
+  ]);
+
+  // Quantity.
+  $ensure_field([
+    'field_name' => 'field_quantity',
+    'type' => 'integer',
+  ], [
+    'label' => t('Quantity'),
+    'required' => TRUE,
+  ]);
+
+  // Unit price.
+  $ensure_field([
+    'field_name' => 'field_unit_price',
+    'type' => 'decimal',
+    'settings' => [
+      'precision' => 12,
+      'scale' => 2,
+    ],
+  ], [
+    'label' => t('Unit price'),
+  ]);
+
+  // Total price.
+  $ensure_field([
+    'field_name' => 'field_total_price',
+    'type' => 'decimal',
+    'settings' => [
+      'precision' => 12,
+      'scale' => 2,
+    ],
+  ], [
+    'label' => t('Total price'),
+  ]);
+}
+
+/**
+ * Replaces the custom order item entity with a dedicated content type.
+ */
+function sangel_order_update_9005(): void {
+  sangel_order_install_order_item_content_type(TRUE);
+}
+
+/**
+ * Ensures the cart content type exists for cart persistence.
+ */
+function sangel_order_install_cart_content_type(bool $is_update = FALSE): void {
+  $type = NodeType::load('cart');
+  if (!$type) {
+    $type = NodeType::create([
+      'type' => 'cart',
+      'name' => t('Cart'),
+      'description' => t('Stores the active cart for a user.'),
+      'new_revision' => FALSE,
+      'status' => FALSE,
+      'display_submitted' => FALSE,
+    ]);
+    $type->setThirdPartySetting('menu_ui', 'available_menus', []);
+    $type->save();
+  }
+
+  $field_storage = FieldStorageConfig::loadByName('node', 'field_cart_data');
+  if (!$field_storage) {
+    FieldStorageConfig::create([
+      'field_name' => 'field_cart_data',
+      'entity_type' => 'node',
+      'type' => 'text_long',
+      'settings' => [],
+      'cardinality' => 1,
+      'translatable' => FALSE,
+    ])->save();
+  }
+
+  $field = FieldConfig::loadByName('node', 'cart', 'field_cart_data');
+  if (!$field) {
+    FieldConfig::create([
+      'field_name' => 'field_cart_data',
+      'entity_type' => 'node',
+      'bundle' => 'cart',
+      'label' => t('Cart data'),
+      'description' => t('Internal JSON representation of the cart items.'),
+      'required' => FALSE,
+      'settings' => [
+        'display_summary' => FALSE,
+      ],
+    ])->save();
+  }
+}
+
+/**
+ * Adds the cart content type for existing installations.
+ */
+function sangel_order_update_9006(): void {
+  sangel_order_install_cart_content_type(TRUE);
+}

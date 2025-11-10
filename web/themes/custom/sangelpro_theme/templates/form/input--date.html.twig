@@ -1,0 +1,16 @@
+{#
+  Custom date input with icon wrapper.
+#}
+{% set input_attributes = attributes.addClass('sangel-date-field__input') %}
+<div class="sangel-date-field">
+  <span class="sangel-date-field__icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="sangel-date-field__svg">
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2"/>
+      <path d="M8 3v4"/>
+      <path d="M16 3v4"/>
+      <path d="M3.5 9.5h17"/>
+    </svg>
+  </span>
+  <input{{ input_attributes }} />
+</div>
+{{ children }}

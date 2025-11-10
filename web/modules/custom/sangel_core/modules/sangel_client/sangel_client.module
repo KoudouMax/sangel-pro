@@ -1,0 +1,201 @@
+<?php
+
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\node\NodeInterface;
+use Drupal\user\Entity\Role;
+use Drupal\user\Entity\User;
+use Drupal\user\UserInterface;
+
+/**
+ * Implements hook_entity_presave().
+ */
+function sangel_client_entity_presave(EntityInterface $entity): void {
+  if (!sangel_client_is_managed_client($entity)) {
+    return;
+  }
+
+  $node = $entity;
+  $username = sangel_client_get_field_value($node, 'field_username');
+  $mail = sangel_client_get_field_value($node, 'field_mail');
+  $password = sangel_client_get_field_value($node, 'field_password', FALSE);
+
+  if ($username === '' || $mail === '' || $password === '') {
+    \Drupal::logger('sangel_client')->warning('Unable to sync user for client node @nid because username, email, or password is missing.', [
+      '@nid' => $node->id() ?? 'new',
+    ]);
+    return;
+  }
+
+  try {
+    $storage = \Drupal::entityTypeManager()->getStorage('user');
+    $user = sangel_client_resolve_user($node, $storage, $username, $mail);
+
+    if (!$user) {
+      $user = $storage->create();
+      $user->activate();
+    }
+
+    $user->setUsername($username);
+    $user->setEmail($mail);
+    $user->setPassword($password);
+    sangel_client_ensure_client_role($user);
+    $user->save();
+
+    // TODO: Set current user as the one creating the new user?
+    $node->setOwnerId($user->id());
+    $node->set('field_user', $user->id());
+  }
+  catch (\Exception $exception) {
+    \Drupal::logger('sangel_client')->error('Failed to synchronize user for client node @nid: @message', [
+      '@nid' => $node->id() ?? 'new',
+      '@message' => $exception->getMessage(),
+    ]);
+    throw $exception;
+  }
+}
+
+/**
+ * Implements hook_entity_predelete().
+ */
+function sangel_client_entity_predelete(EntityInterface $entity): void {
+  static $guard = [];
+
+  if (!sangel_client_is_managed_client($entity)) {
+    return;
+  }
+
+  /** @var \Drupal\node\NodeInterface $node */
+  $node = $entity;
+  $owner = $node->getOwner();
+  if (!$owner instanceof UserInterface || !$owner->id() || !$owner->hasRole('client')) {
+    return;
+  }
+
+  $query = \Drupal::entityQuery('node')
+    ->condition('type', 'client')
+    ->condition('uid', $owner->id())
+    ->condition('nid', $node->id(), '<>');
+  $remaining = (int) $query->count()
+    ->accessCheck(FALSE)
+    ->execute();
+
+  if ($remaining === 0) {
+    try {
+      if (!empty($guard[$owner->id()])) {
+        return;
+      }
+      $guard[$owner->id()] = TRUE;
+      $owner->delete();
+    }
+    catch (\Exception $exception) {
+      \Drupal::logger('sangel_client')->error('Failed to delete client user @uid when removing node @nid: @message', [
+        '@uid' => $owner->id(),
+        '@nid' => $node->id(),
+        '@message' => $exception->getMessage(),
+      ]);
+      throw $exception;
+    }
+    finally {
+      unset($guard[$owner->id()]);
+    }
+  }
+}
+
+/**
+ * Determines if the entity is a default translation of a managed client node.
+ */
+function sangel_client_is_managed_client(EntityInterface $entity): bool {
+  if (!$entity instanceof NodeInterface || $entity->bundle() !== 'client') {
+    return FALSE;
+  }
+
+  if (method_exists($entity, 'isDefaultTranslation') && !$entity->isDefaultTranslation()) {
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+/**
+ * Loads or creates the user attached to a client node.
+ */
+function sangel_client_resolve_user(NodeInterface $node, EntityStorageInterface $storage, string $username, string $mail): ?UserInterface {
+  if (!$node->isNew()) {
+    $owner = $node->getOwner();
+    if ($owner instanceof UserInterface && $owner->id() && $owner->hasRole('client')) {
+      return $owner;
+    }
+  }
+
+  if ($mail !== '') {
+    $users = $storage->loadByProperties(['mail' => $mail]);
+    if ($user = sangel_client_pick_user($users)) {
+      return $user;
+    }
+  }
+
+  if ($username !== '') {
+    $users = $storage->loadByProperties(['name' => $username]);
+    if ($user = sangel_client_pick_user($users)) {
+      return $user;
+    }
+  }
+
+  return NULL;
+}
+
+/**
+ * Picks a user entity from a set of candidates.
+ */
+function sangel_client_pick_user(array $users): ?UserInterface {
+  if (!$users) {
+    return NULL;
+  }
+
+  /** @var \Drupal\user\UserInterface $candidate */
+  foreach ($users as $candidate) {
+    if ($candidate instanceof UserInterface && $candidate->hasRole('client')) {
+      return $candidate;
+    }
+  }
+
+  $candidate = reset($users);
+  return $candidate instanceof UserInterface ? $candidate : NULL;
+}
+
+/**
+ * Ensures the managed user carries the client role.
+ */
+function sangel_client_ensure_client_role(UserInterface $user): void {
+  static $roleChecked = FALSE;
+  static $roleExists = FALSE;
+
+  if (!$roleChecked) {
+    $roleChecked = TRUE;
+    $roleExists = (bool) Role::load('client');
+    if (!$roleExists) {
+      \Drupal::logger('sangel_client')->warning('Client role is missing. Users will not receive the role automatically.');
+    }
+  }
+
+  if ($roleExists && !$user->hasRole('client')) {
+    $user->addRole('client');
+  }
+}
+
+/**
+ * Safely extracts a string value from a node field.
+ */
+function sangel_client_get_field_value(NodeInterface $node, string $field_name, bool $trim = TRUE): string {
+  if (!$node->hasField($field_name)) {
+    return '';
+  }
+
+  $value = $node->get($field_name)->value;
+  if (!is_string($value)) {
+    return '';
+  }
+
+  return $trim ? trim($value) : $value;
+}

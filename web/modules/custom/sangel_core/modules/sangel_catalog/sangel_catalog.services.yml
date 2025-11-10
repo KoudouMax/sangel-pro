@@ -1,0 +1,24 @@
+services:
+  logger.channel.sangel_catalog:
+    parent: logger.channel_base
+    arguments: ['sangel_catalog']
+
+  sangel_catalog.feed_subscriber:
+    class: Drupal\sangel_catalog\EventSubscriber\CatalogFeedSubscriber
+    arguments:
+      - '@entity_type.manager'
+      - '@logger.channel.sangel_catalog'
+      - '@state'
+      - '@sangel_core.catalog_product_repository'
+    tags:
+      - { name: event_subscriber }
+
+  sangel_catalog.import_manager:
+    class: Drupal\sangel_catalog\Service\CatalogImportManager
+    arguments:
+      - '@entity_type.manager'
+      - '@entity_field.manager'
+      - '@sangel_core.catalog_product_repository'
+      - '@logger.channel.sangel_catalog'
+      - '@file_system'
+      - '@string_translation'

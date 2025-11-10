@@ -1,0 +1,7 @@
+sangel_order.user_orders_link:
+  title: 'Mes commandes'
+  route_name: sangel_order.user_orders
+  route_parameters:
+    user: '<current>'
+  menu_name: account
+  weight: 20

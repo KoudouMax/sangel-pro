@@ -1,0 +1,365 @@
+input,
+select,
+textarea {
+  outline: none;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+}
+
+.sp-form {
+  --sp-form-brand: #1d4a9c;
+  --sp-form-brand-dark: #11306d;
+  --sp-form-surface: #ffffff;
+  --sp-form-border: #e3e8f4;
+  --sp-form-border-strong: #cdd6eb;
+  --sp-form-muted: rgba(39, 48, 65, 0.65);
+  --sp-form-label: #1f2636;
+  --sp-form-placeholder: rgba(39, 48, 65, 0.45);
+  --sp-form-shadow: 0 24px 60px rgba(17, 48, 109, 0.08);
+  --sp-form-radius: 1.5rem;
+  --sp-form-input-radius: 1.15rem;
+  --sp-form-gap: 1.35rem;
+  color: var(--sp-form-label);
+}
+
+.sp-form[data-sp-form-skin="card"]:not(.sp-form--bare):not(.sangel-search):not(.product-action-form):not(.auth-shell__form-shell):not(.auth-shell__form) {
+  padding: clamp(1.25rem, 3vw, 2.75rem);
+  border-radius: var(--sp-form-radius);
+  border: 1px solid var(--sp-form-border);
+  background-color: var(--sp-form-surface);
+  box-shadow: var(--sp-form-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-form-gap);
+}
+
+.sp-form.sp-form--bare,
+.sp-form[data-sp-form-skin="inline"],
+.sp-form.sangel-search,
+.sp-form.product-action-form,
+.sp-form.auth-shell__form-shell,
+.sp-form.auth-shell__form {
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.sp-form .form-item {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.sp-form .form-item:not(:last-child) {
+  margin-bottom: var(--sp-form-gap);
+}
+
+.sp-form .form-item label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--sp-form-label);
+}
+
+.sp-form .form-required::after {
+  color: var(--sp-form-brand);
+}
+
+.sp-form .description {
+  font-size: 0.85rem;
+  color: var(--sp-form-muted);
+  margin-top: 0.35rem;
+}
+
+.sp-form .form-item--error .description {
+  color: #d93025;
+}
+
+.sp-form
+  :is(
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="search"],
+    input[type="number"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="date"],
+    input[type="time"],
+    input[type="datetime-local"],
+    select,
+    textarea
+  ):not(.auth-shell__input) {
+  width: 100%;
+  border: 1px solid var(--sp-form-border);
+  border-radius: var(--sp-form-input-radius);
+  background: #f9fbff;
+  padding: 0.95rem 1.25rem;
+  font-size: 0.95rem;
+  color: #273041;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 1px 4px rgba(17, 48, 109, 0.08);
+}
+
+.sp-form
+  :is(
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="search"],
+    input[type="number"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="date"],
+    input[type="time"],
+    input[type="datetime-local"],
+    select,
+    textarea
+  ):not(.auth-shell__input)::placeholder {
+  color: var(--sp-form-placeholder);
+}
+
+.sp-form
+  :is(
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="search"],
+    input[type="number"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="date"],
+    input[type="time"],
+    input[type="datetime-local"],
+    select,
+    textarea
+  ):not(.auth-shell__input):focus,
+.sp-form
+  :is(
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="search"],
+    input[type="number"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="date"],
+    input[type="time"],
+    input[type="datetime-local"],
+    select,
+    textarea
+  ):not(.auth-shell__input):focus-visible {
+  border-color: var(--sp-form-brand);
+  background-color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(29, 74, 156, 0.12);
+}
+
+.sp-form select:not([multiple]) {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' stroke='%231d4a9c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 8l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1.25rem center;
+  background-size: 0.9rem;
+  padding-right: 2.75rem;
+}
+
+.sp-form textarea {
+  min-height: 140px;
+  resize: vertical;
+  line-height: 1.4;
+}
+
+.sp-form .form-item--error
+  :is(
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="search"],
+    input[type="number"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="date"],
+    input[type="time"],
+    input[type="datetime-local"],
+    select,
+    textarea
+  ):not(.auth-shell__input) {
+  border-color: #d93025;
+  box-shadow: 0 0 0 4px rgba(217, 48, 37, 0.12);
+}
+
+.sp-form .form-item--error label {
+  color: #d93025;
+}
+
+.sp-form .form-item--error-message {
+  margin-top: 0.5rem;
+  color: #d93025;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.sp-form fieldset {
+  border: 1px solid var(--sp-form-border);
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  background: #ffffff;
+  margin: 0 0 var(--sp-form-gap);
+}
+
+.sp-form legend {
+  font-weight: 700;
+  color: var(--sp-form-brand);
+  margin-bottom: 0.75rem;
+}
+
+.sp-form .form-type-checkbox,
+.sp-form .form-type-radio {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sp-form .form-type-checkbox input[type="checkbox"],
+.sp-form .form-type-radio input[type="radio"] {
+  flex-shrink: 0;
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: var(--sp-form-brand);
+  border-radius: 0.35rem;
+}
+
+.sp-form .form-type-radio input[type="radio"] {
+  border-radius: 999px;
+}
+
+.sp-form .form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.sp-form
+  .form-actions
+  :is(
+    input[type="submit"],
+    input[type="button"],
+    input[type="reset"],
+    button,
+    .button
+  ) {
+  border: none;
+  border-radius: 999px;
+  background-color: var(--sp-form-brand);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 0.95rem 2.6rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 18px 36px rgba(29, 74, 156, 0.25);
+}
+
+.sp-form
+  .form-actions
+  :is(
+    input[type="submit"],
+    input[type="button"],
+    input[type="reset"],
+    button,
+    .button
+  ):hover {
+  background-color: var(--sp-form-brand-dark);
+  transform: translateY(-2px);
+}
+
+.sp-form
+  .form-actions
+  :is(
+    input[type="submit"],
+    input[type="button"],
+    input[type="reset"],
+    button,
+    .button
+  ):disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.sp-form .button--secondary,
+.sp-form .form-actions .button--secondary,
+.sp-form .form-actions .button.button--ghost {
+  background-color: #f1f4fb;
+  color: var(--sp-form-brand);
+  box-shadow: none;
+}
+
+.sp-form input[type="file"] {
+  width: 100%;
+  border: 1px dashed var(--sp-form-border-strong);
+  background-color: #f5f7fd;
+  border-radius: 1.1rem;
+  padding: 1.1rem 1.25rem;
+  font-size: 0.9rem;
+  color: var(--sp-form-muted);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.sp-form input[type="file"]::file-selector-button,
+.sp-form input[type="file"]::-webkit-file-upload-button {
+  margin-right: 1rem;
+  border: none;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 9999px;
+  background-color: var(--sp-form-brand);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm1 7V3.5L18.5 9H15zM8 15h8v2H8v-2zm0-4h8v2H8v-2z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 1.2rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.sp-form input[type="file"]::file-selector-button:hover,
+.sp-form input[type="file"]::-webkit-file-upload-button:hover {
+  background-color: var(--sp-form-brand-dark);
+  transform: translateY(-1px);
+}
+
+.sp-form input[type="file"]:hover {
+  border-color: var(--sp-form-brand);
+}
+
+.sp-form .form-wrapper,
+.sp-form .form-composite {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-form-gap);
+}
+
+.sp-form .messages {
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+}
+
+.sp-form.sangel-search :is(input[type="text"], input[type="search"]) {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}

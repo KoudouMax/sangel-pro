@@ -1,0 +1,114 @@
+{#
+/**
+ * @file
+ * Theme override to display an order item in teaser view mode.
+ */
+#}
+
+{% set product = node.field_product.entity ?? null %}
+{% set product_id = product ? product.id() : (order_item_product_id ?? node.field_product.target_id ?? node.field_product.value ?? null) %}
+{% set product_title = product ? product.label() : (node.field_product_title.value ?? label) %}
+{% set product_url = product_id ? path('entity.node.canonical', {'node': product_id}) : null %}
+{% set image_url = product and product.hasField('field_image_url') and product.field_image_url.value ? product.field_image_url.value : null %}
+{% set sku = node.field_product_sku.value ?? '' %}
+{% set quantity_raw = node.field_quantity.value %}
+{% set quantity = quantity_raw is not empty ? quantity_raw : 0 %}
+{% set unit_price_raw = node.field_unit_price.value %}
+{% set unit_price = unit_price_raw is not empty ? unit_price_raw : 0 %}
+{% set total_price_raw = node.field_total_price.value %}
+{% set total_price = total_price_raw is not empty ? total_price_raw : (quantity * unit_price) %}
+{% set formatted_unit_price = unit_price|number_format(0, ',', ' ') %}
+{% set formatted_total_price = total_price|number_format(0, ',', ' ') %}
+
+{% set wrapper_classes = [
+  'group',
+  'relative',
+  'overflow-hidden',
+  'rounded-2xl',
+  'border',
+  'border-sangel-ice-strong',
+  'bg-white/90',
+  'p-3',
+  'shadow-sm',
+  'transition',
+  'hover:-translate-y-0.5',
+  'hover:border-sangel-primary/40',
+  'hover:shadow-lg',
+  'print:rounded-lg',
+  'print:border-sangel-text/40',
+  'print:bg-white',
+  'print:shadow-none',
+  'print:translate-y-0',
+  'print:p-4',
+] %}
+
+<article{{attributes.addClass(wrapper_classes)}}>
+	<div class="flex flex-col sm:flex-row print:flex-row print:items-start print:gap-4">
+		<div class="relative flex h-24 w-full items-center justify-center overflow-hidden rounded-xl bg-sangel-ice sm:h-28 sm:w-32 sm:flex-shrink-0 print:h-24 print:w-24 print:rounded-lg print:border print:border-sangel-ice-strong print:bg-white">
+			{% if image_url %}
+				<img src="{{ image_url }}" alt="{{ product_title }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105 print:scale-100" loading="lazy">
+			{% else %}
+				<span class="text-xs font-semibold uppercase tracking-[0.3em] text-sangel-text/40 print:text-[0.625rem] print:tracking-normal">{{ 'Aperçu indisponible'|t }}</span>
+			{% endif %}
+			<span class="absolute inset-0 bg-gradient-to-tr from-transparent via-transparent to-white/0 transition duration-500 group-hover:from-white/0 print:hidden"></span>
+		</div>
+
+		<div class="flex flex-1 flex-col justify-between gap-3.5 p-3.5 print:gap-4 print:p-0">
+			<div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between print:flex-row print:items-start print:gap-4">
+				<div class="space-y-1.5">
+					<h3 class="text-[1.05rem] font-semibold text-sangel-text print:text-base">
+						{% if product_url %}
+							<a href="{{ product_url }}" class="hover:text-sangel-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sangel-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white print:no-underline print:text-sangel-text">
+								{{ product_title }}
+							</a>
+						{% else %}
+							{{ product_title }}
+						{% endif %}
+					</h3>
+					{% if sku %}
+						<span class="inline-flex items-center rounded-full bg-sangel-ice px-2.5 py-[0.35rem] text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-sangel-text/60 print:rounded print:bg-transparent print:px-0 print:py-0 print:text-xs print:font-medium print:uppercase print:tracking-normal">
+							{{ 'Réf. : @sku'|t({'@sku': sku}) }}
+						</span>
+					{% endif %}
+				</div>
+				<div class="text-right print:text-left">
+					<span class="block text-[0.65rem] uppercase tracking-[0.28em] text-sangel-text/50 print:text-[0.625rem] print:tracking-normal">{{ 'Prix unitaire'|t }}</span>
+					<span class="text-lg font-semibold text-sangel-primary print:text-base print:font-bold print:text-sangel-text">{{ formatted_unit_price }}&nbsp;F&nbsp;CFA</span>
+				</div>
+			</div>
+
+			<div class="grid grid-cols-2 gap-3 text-sm text-sangel-text/70 sm:grid-cols-3 print:grid-cols-3 print:gap-3 print:text-xs">
+				<div class="rounded-lg bg-sangel-ice/60 px-2.5 py-2 print:rounded-lg print:border print:border-sangel-ice-strong print:bg-transparent print:px-3 print:py-2 print:text-sangel-text">
+					<span class="block text-[0.65rem] uppercase tracking-[0.26em] text-sangel-text/50 print:text-[0.6rem] print:tracking-normal">{{ 'Quantité'|t }}</span>
+					<span class="mt-0.5 block text-base font-semibold text-sangel-text print:mt-0.5 print:text-sm print:font-semibold">{{ quantity }}</span>
+				</div>
+				<div class="rounded-lg bg-sangel-ice/60 px-2.5 py-2 print:rounded-lg print:border print:border-sangel-ice-strong print:bg-transparent print:px-3 print:py-2 print:text-sangel-text">
+					<span class="block text-[0.65rem] uppercase tracking-[0.26em] text-sangel-text/50 print:text-[0.6rem] print:tracking-normal">{{ 'Total'|t }}</span>
+					<span class="mt-0.5 block text-base font-semibold text-sangel-text print:mt-0.5 print:text-sm print:font-semibold">{{ formatted_total_price }}&nbsp;F&nbsp;CFA</span>
+				</div>
+				<div class="col-span-2 rounded-lg bg-sangel-ice/60 px-2.5 py-2 sm:col-span-1 print:col-span-1 print:rounded-lg print:border print:border-sangel-ice-strong print:bg-transparent print:px-3 print:py-2 print:text-sangel-text">
+					<span class="block text-[0.65rem] uppercase tracking-[0.26em] text-sangel-text/50 print:text-[0.6rem] print:tracking-normal">{{ sku ? 'Référence'|t : 'Conditionnement'|t }}</span>
+					<span class="mt-0.5 block text-base font-semibold text-sangel-text print:mt-0.5 print:text-sm print:font-semibold">
+						{% if sku %}
+							{{ 'Réf. : @sku'|t({'@sku': sku}) }}
+						{% else %}
+							{{ quantity > 1 ? 'Multiples unités'|t : 'Unité unique'|t }}
+						{% endif %}
+					</span>
+				</div>
+			</div>
+
+			{% if product_url %}
+				<div class="flex items-center justify-end print:hidden">
+					<a href="{{ product_url }}" class="inline-flex items-center gap-2 text-sm font-semibold text-sangel-primary hover:text-sangel-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sangel-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white">
+						<span>{{ 'Voir la fiche produit'|t }}</span>
+						<span aria-hidden="true" class="transition group-hover:translate-x-1">&rarr;</span>
+					</a>
+				</div>
+				<div class="hidden print:block print:text-xs print:text-sangel-text/70">
+					{{ 'Fiche produit : @url'|t({'@url': product_url}) }}
+				</div>
+			{% endif %}
+		</div>
+	</div>
+</article>

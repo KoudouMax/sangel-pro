@@ -1,0 +1,1169 @@
+<?php
+
+use Drupal\Component\Serialization\Json;
+use Drupal\Component\Utility\Html;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Element;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Url;
+use Drupal\node\NodeInterface;
+use Drupal\user\Entity\User;
+use Drupal\user\UserInterface;
+/**
+ * Setter/Getter d'une valeur pour la requête courante.
+ */
+function sangel_core_base_cart_ctx($new_value = NULL, $reset = FALSE) {
+  $cache = &drupal_static(__FUNCTION__);
+  if ($reset) {
+    $cache = NULL;
+  }
+  if ($new_value !== NULL) {
+    $cache = $new_value;
+  }
+  return $cache;
+}
+
+/**
+ * Builds a snapshot of cart items for theming purposes.
+ *
+ * @param array<int,int>|null $override_items
+ *   Optional raw cart items (product ID => quantity). When provided, the
+ *   snapshot is generated from this data instead of the current user cart.
+ * @param array<string,mixed> $context
+ *   Optional context options. Supported keys:
+ *   - allow_remove: (bool) Whether the generated lines should expose a remove
+ *     URL. Defaults to TRUE when no override is provided, FALSE otherwise.
+ *
+ * @return array<string,mixed>
+ *   Normalized cart data ready for theming.
+ */
+function sangel_core_base_build_cart_snapshot(?array $override_items = NULL, array $context = []): array {
+  $cart_manager = \Drupal::service('sangel_order.cart_manager');
+  /** @var \Drupal\node\NodeStorageInterface $storage */
+  $storage = \Drupal::entityTypeManager()->getStorage('node');
+
+  $raw_items = [];
+
+  if ($override_items !== NULL) {
+    foreach ($override_items as $product_id => $quantity) {
+      $product_id = (int) $product_id;
+      $quantity = (int) $quantity;
+      if ($product_id > 0 && $quantity > 0) {
+        $raw_items[$product_id] = $quantity;
+      }
+    }
+  }
+  else {
+    foreach ($cart_manager->getItems() as $product_id => $quantity) {
+      $product_id = (int) $product_id;
+      $quantity = (int) $quantity;
+      if ($product_id > 0 && $quantity > 0) {
+        $raw_items[$product_id] = $quantity;
+      }
+    }
+  }
+
+  if (!$raw_items) {
+    return [
+      'items' => [],
+      'total_raw' => 0.0,
+      'total_formatted' => number_format(0, 0, ',', ' '),
+      'count' => 0,
+      'is_empty' => TRUE,
+      'allow_remove' => (bool) ($context['allow_remove'] ?? ($override_items === NULL)),
+      'allow_update' => (bool) ($context['allow_update'] ?? ($override_items === NULL)),
+    ];
+  }
+
+  $product_ids = array_keys($raw_items);
+  $loaded_products = $storage->loadMultiple($product_ids);
+
+  $cart_items = [];
+  $total_raw = 0.0;
+  $allow_remove = (bool) ($context['allow_remove'] ?? ($override_items === NULL));
+  $allow_update = (bool) ($context['allow_update'] ?? ($override_items === NULL));
+
+  foreach ($raw_items as $product_id => $quantity) {
+    $product = $loaded_products[$product_id] ?? NULL;
+    if (!$product instanceof NodeInterface || $product->bundle() !== 'product') {
+      $product = $storage->load($product_id);
+      if (!$product instanceof NodeInterface || $product->bundle() !== 'product') {
+        continue;
+      }
+    }
+
+    $quantity = (int) $quantity;
+    if ($quantity <= 0) {
+      continue;
+    }
+
+    $unit_price_raw = (float) ($product->get('field_price')->value ?? 0);
+    $line_total_raw = $unit_price_raw * $quantity;
+    $total_raw += $line_total_raw;
+
+    $image_url = '';
+    if ($product->hasField('field_image_url') && !$product->get('field_image_url')->isEmpty()) {
+      $image_url = $product->get('field_image_url')->value;
+    }
+    elseif ($product->hasField('field_image') && !$product->get('field_image')->isEmpty()) {
+      $file = $product->get('field_image')->entity;
+      if ($file) {
+        $image_url = file_create_url($file->getFileUri());
+      }
+    }
+
+    $item_id = 'cart-item-' . $product_id;
+    $remove_url = $allow_remove ? Url::fromRoute('sangel_order.cart_remove', [
+      'node' => $product_id,
+    ], [
+      'query' => [
+        'target' => $item_id,
+      ],
+    ])->toString() : '';
+
+    $update_url = '';
+    if ($allow_update) {
+      $update_url = Url::fromRoute('sangel_order.cart_update', ['node' => $product_id], [
+        'query' => ['target' => $item_id],
+      ])->toString();
+    }
+
+    $cart_items[] = [
+      'id' => $item_id,
+      'title' => $product->label(),
+      'product_url' => $product->hasLinkTemplate('canonical') ? $product->toUrl()->toString() : '',
+      'quantity' => $quantity,
+      'unit_price_raw' => $unit_price_raw,
+      'unit_price' => number_format($unit_price_raw, 0, ',', ' '),
+      'line_total_raw' => $line_total_raw,
+      'line_total' => number_format($line_total_raw, 0, ',', ' '),
+      'remove_url' => $remove_url,
+      'update_url' => $update_url,
+      'image_url' => $image_url,
+      'sku' => $product->hasField('field_sku') && !$product->get('field_sku')->isEmpty() ? $product->get('field_sku')->value : '',
+    ];
+  }
+
+  usort($cart_items, static function (array $a, array $b): int {
+    return strnatcasecmp($a['title'], $b['title']);
+  });
+
+  $item_count = 0;
+  foreach ($cart_items as $item_data) {
+    $item_count += (int) $item_data['quantity'];
+  }
+
+  return [
+    'items' => $cart_items,
+    'total_raw' => $total_raw,
+    'total_formatted' => number_format($total_raw, 0, ',', ' '),
+    'count' => $item_count,
+    'is_empty' => empty($cart_items),
+    'allow_remove' => $allow_remove,
+    'allow_update' => $allow_update,
+  ];
+}
+
+/**
+ * Loads the stored cart items for the provided user account.
+ *
+ * @param \Drupal\user\UserInterface $account
+ *   The user whose cart data should be retrieved.
+ * @param \Drupal\Core\Session\AccountInterface|null $viewer
+ *   (optional) The account requesting the cart. When it matches $account, the
+ *   current session cart is used as a fallback if no persisted cart is found.
+ *
+ * @return array<int,int>
+ *   Normalized cart items indexed by product node ID.
+ */
+function sangel_core_base_load_cart_items_for_user(UserInterface $account, ?AccountInterface $viewer = NULL): array {
+  if (!$account->id()) {
+    return [];
+  }
+
+  /** @var \Drupal\node\NodeStorageInterface $storage */
+  $storage = \Drupal::entityTypeManager()->getStorage('node');
+
+  try {
+    $cart_ids = $storage->getQuery()
+      ->condition('type', 'cart')
+      ->condition('uid', $account->id())
+      ->accessCheck(FALSE)
+      ->sort('changed', 'DESC')
+      ->sort('nid', 'DESC')
+      ->execute();
+  }
+  catch (\Throwable $throwable) {
+    \Drupal::logger('sangel_core_base')->warning('Unable to load cart for user @uid: @message', [
+      '@uid' => $account->id(),
+      '@message' => $throwable->getMessage(),
+    ]);
+    $cart_ids = [];
+  }
+
+  foreach ($cart_ids as $cart_id) {
+    $cart = $storage->load($cart_id);
+    if (!$cart instanceof NodeInterface || !$cart->hasField('field_cart_data')) {
+      continue;
+    }
+
+    $raw = (string) $cart->get('field_cart_data')->value;
+    if ($raw === '') {
+      continue;
+    }
+
+    try {
+      $decoded = Json::decode($raw);
+    }
+    catch (\InvalidArgumentException $exception) {
+      \Drupal::logger('sangel_core_base')->error('Invalid cart JSON for user @uid on cart @nid: @message', [
+        '@uid' => $account->id(),
+        '@nid' => $cart->id(),
+        '@message' => $exception->getMessage(),
+      ]);
+      continue;
+    }
+
+    if (!is_array($decoded)) {
+      continue;
+    }
+
+    $normalized = [];
+    foreach ($decoded as $product_id => $quantity) {
+      $product_id = (int) $product_id;
+      $quantity = (int) $quantity;
+      if ($product_id > 0 && $quantity > 0) {
+        $normalized[$product_id] = $quantity;
+      }
+    }
+
+    if ($normalized) {
+      return $normalized;
+    }
+  }
+
+  // Fallback to the current session cart when the viewer is the owner and no
+  // persisted data was found (e.g. cart not yet saved to node).
+  if ($viewer instanceof AccountInterface && (int) $viewer->id() === (int) $account->id()) {
+    try {
+      /** @var \Drupal\sangel_order\Service\CartManager $cart_manager */
+      $cart_manager = \Drupal::service('sangel_order.cart_manager');
+      $fallback = $cart_manager->getItems();
+      if (is_array($fallback)) {
+        $normalized = [];
+        foreach ($fallback as $product_id => $quantity) {
+          $product_id = (int) $product_id;
+          $quantity = (int) $quantity;
+          if ($product_id > 0 && $quantity > 0) {
+            $normalized[$product_id] = $quantity;
+          }
+        }
+        if ($normalized) {
+          return $normalized;
+        }
+      }
+    }
+    catch (\Throwable $throwable) {
+      \Drupal::logger('sangel_core_base')->warning('Fallback cart lookup failed for user @uid: @message', [
+        '@uid' => $account->id(),
+        '@message' => $throwable->getMessage(),
+      ]);
+    }
+  }
+
+  return [];
+}
+
+
+/**
+ * Implements hook_views_data().
+ */
+function sangel_core_base_views_data(): array {
+  $data = [];
+
+  $data['node']['sangel_cart_items'] = [
+    'title' => t('Sangel cart items'),
+    'help' => t('Affiche la liste des produits présents dans le panier.'),
+    'field' => [
+      'id' => 'sangel_cart_items',
+    ],
+  ];
+
+  return $data;
+}
+
+/**
+ * Collects the data needed to render the manage clients dashboard.
+ *
+ * @param \Drupal\Core\Session\AccountInterface|null $account
+ *   (optional) The account used to scope the dataset. Defaults to the current
+ *   user. Commercial users will only see the clients they created. Other roles
+ *   continue to see all clients.
+ */
+function sangel_core_base_collect_manage_clients_context(?AccountInterface $account = NULL): array {
+  $account = $account ?: \Drupal::currentUser();
+
+  $static = &drupal_static(__FUNCTION__);
+  if (!is_array($static)) {
+    $static = [];
+  }
+
+  $cache_key = $account instanceof AccountInterface ? (int) $account->id() : 0;
+  if (isset($static[$cache_key])) {
+    return $static[$cache_key];
+  }
+
+  $entity_type_manager = \Drupal::entityTypeManager();
+  $date_formatter = \Drupal::service('date.formatter');
+  $is_commercial = $account instanceof AccountInterface && in_array('commercial', $account->getRoles(), TRUE);
+
+  $context = [
+    'clients' => [],
+    'recent_clients' => [],
+    'clients_summary' => [
+      'total' => 0,
+      'active' => 0,
+      'inactive' => 0,
+    ],
+    'client_type_filters' => [],
+    'create_client_url' => Url::fromRoute('sangel_core.manage_clients_create')->toString(),
+    'import_feed_url' => Url::fromRoute('sangel_catalog.commercial_import')->toString(),
+    'catalog_overview_url' => Url::fromRoute('sangel_core.manage_catalogs')->toString(),
+    'clients_overview_url' => Url::fromUserInput('/gestion/clients/liste')->toString(),
+  ];
+
+  try {
+    $storage = $entity_type_manager->getStorage('node');
+    $query = $storage->getQuery()
+      ->condition('type', 'client')
+      ->accessCheck(TRUE)
+      ->range(0, 100)
+      ->sort('changed', 'DESC');
+    if ($is_commercial) {
+      $query->condition('uid', (int) $account->id());
+    }
+    $client_ids = $query->execute();
+    /** @var \Drupal\node\NodeInterface[] $client_nodes */
+    $client_nodes = $storage->loadMultiple($client_ids);
+  }
+  catch (\Throwable $throwable) {
+    \Drupal::logger('sangel_core_base')->error('Unable to load client accounts: @message', [
+      '@message' => $throwable->getMessage(),
+    ]);
+    $client_nodes = [];
+  }
+
+  foreach ($client_nodes as $client_node) {
+    if (!$client_node instanceof NodeInterface) {
+      continue;
+    }
+
+    $owner = NULL;
+    if ($client_node->hasField('field_user') && !$client_node->get('field_user')->isEmpty()) {
+      $target_uid = (int) $client_node->get('field_user')->target_id;
+      if ($target_uid) {
+        $owner = User::load($target_uid);
+      }
+    }
+    if (!$owner instanceof UserInterface) {
+      $owner = $client_node->getOwner();
+    }
+    $owner_name = $owner instanceof UserInterface ? $owner->getDisplayName() : '';
+    $owner_mail = $owner instanceof UserInterface ? $owner->getEmail() : '';
+    $owner_last_access = $owner instanceof UserInterface ? $owner->getLastAccessedTime() : 0;
+
+    $client_types = [];
+    $client_type_ids = [];
+    if ($client_node->hasField('field_client_type') && !$client_node->get('field_client_type')->isEmpty()) {
+      foreach ($client_node->get('field_client_type') as $item) {
+        $term = $item->entity;
+        if ($term) {
+          $client_types[] = $term->label();
+          $client_type_ids[] = (int) $term->id();
+        }
+      }
+    }
+
+    $is_published = $client_node->isPublished();
+
+    $client_data = [
+      'id' => $client_node->id(),
+      'title' => $client_node->label(),
+      'company' => $client_node->hasField('field_reason_social') && !$client_node->get('field_reason_social')->isEmpty()
+        ? $client_node->get('field_reason_social')->value
+        : '',
+      'email' => $client_node->hasField('field_mail') && !$client_node->get('field_mail')->isEmpty()
+        ? $client_node->get('field_mail')->value
+        : $owner_mail,
+      'phone' => $client_node->hasField('field_phonenumber') && !$client_node->get('field_phonenumber')->isEmpty()
+        ? $client_node->get('field_phonenumber')->value
+        : '',
+      'client_type' => implode(', ', $client_types),
+      'client_type_ids' => $client_type_ids,
+      'status' => $is_published ? 'published' : 'unpublished',
+      'status_label' => $is_published ? t('Actif') : t('Inactif'),
+      'owner_name' => $owner_name,
+      'owner_mail' => $owner_mail,
+      'owner_last_access' => $owner_last_access ? $date_formatter->format($owner_last_access, 'short') : '',
+      'owner_last_access_timestamp' => $owner_last_access,
+      'created' => $date_formatter->format($client_node->getCreatedTime(), 'short'),
+      'updated' => $date_formatter->format($client_node->getChangedTime(), 'short'),
+      'view_url' => Url::fromRoute('sangel_core.manage_clients_profile_page', ['node' => $client_node->id()])->toString(),
+      'edit_url' => Url::fromRoute('sangel_core.manage_clients_edit', ['node' => $client_node->id()])->toString(),
+      'delete_url' => $client_node->toUrl('delete-form')->toString(),
+      'cart_url' => Url::fromRoute('sangel_core.manage_clients_cart_page', ['node' => $client_node->id()])->toString(),
+      'orders_url' => Url::fromRoute('sangel_core.manage_clients_orders', ['node' => $client_node->id()])->toString(),
+      'catalog_url' => Url::fromRoute('sangel_core.manage_clients_catalogs_page', ['node' => $client_node->id()])->toString(),
+      'search_index' => mb_strtolower(implode(' ', array_filter([
+        $client_node->label(),
+        $client_node->hasField('field_reason_social') && !$client_node->get('field_reason_social')->isEmpty()
+          ? $client_node->get('field_reason_social')->value
+          : '',
+        $owner_name,
+        $owner_mail,
+        $client_node->hasField('field_mail') && !$client_node->get('field_mail')->isEmpty()
+          ? $client_node->get('field_mail')->value
+          : '',
+        $client_node->hasField('field_phonenumber') && !$client_node->get('field_phonenumber')->isEmpty()
+          ? $client_node->get('field_phonenumber')->value
+          : '',
+        implode(' ', $client_types),
+      ])), 'UTF-8'),
+    ];
+
+    $context['clients'][] = $client_data;
+    $context['clients_summary']['total']++;
+    if ($is_published) {
+      $context['clients_summary']['active']++;
+    }
+    else {
+      $context['clients_summary']['inactive']++;
+    }
+  }
+
+  $context['recent_clients'] = array_slice($context['clients'], 0, 5);
+
+  try {
+    $term_storage = $entity_type_manager->getStorage('taxonomy_term');
+    $loaded_types = $term_storage->loadTree('client_type');
+    foreach ($loaded_types as $term) {
+      $context['client_type_filters'][] = [
+        'id' => $term->tid,
+        'label' => $term->name,
+      ];
+    }
+  }
+  catch (\Throwable $throwable) {
+    \Drupal::logger('sangel_core_base')->warning('Unable to load client types: @message', [
+      '@message' => $throwable->getMessage(),
+    ]);
+  }
+
+  return $static[$cache_key] = $context;
+}
+
+/**
+ * Preprocesses the cart placeholder page to provide cart data.
+ */
+function sangel_core_base_preprocess_sangel_core_placeholder_page(array &$variables): void {
+  $identifier = $variables['identifier'] ?? '';
+  $is_cart_page = $identifier === 'client-cart';
+  $is_manage_clients_page = $identifier === 'manage-clients-account';
+
+  $variables['is_cart_page'] = $is_cart_page;
+  $variables['is_manage_clients_page'] = $is_manage_clients_page;
+
+  if ($is_cart_page) {
+    $current_user = \Drupal::currentUser();
+    $account_entity = NULL;
+    if ($current_user->isAuthenticated()) {
+      $account_entity = User::load($current_user->id());
+    }
+    $snapshot = sangel_core_base_build_cart_snapshot(NULL, [
+      'account' => $account_entity ?: $current_user,
+      'viewer' => $current_user,
+    ]);
+
+    $variables['cart_items'] = $snapshot['items'];
+    $variables['cart_item_count'] = $snapshot['count'];
+    $variables['cart_is_empty'] = $snapshot['is_empty'];
+    $variables['cart_total'] = $snapshot['total_formatted'];
+    $variables['cart_total_raw'] = $snapshot['total_raw'];
+    $variables['cart_quantities_editable'] = !$snapshot['is_empty'];
+    $variables['cart_can_checkout'] = !$snapshot['is_empty'] && $current_user->isAuthenticated();
+    $variables['cart_checkout_url'] = $current_user->isAuthenticated()
+      ? Url::fromRoute('sangel_order.checkout')->toString()
+      : Url::fromRoute('user.login', [], ['query' => ['destination' => '/compte-clients/panier']])->toString();
+    $variables['cart_continue_url'] = Url::fromRoute('sangel_core.client_catalogue')->toString();
+    $variables['cart_empty_cta_url'] = Url::fromRoute('sangel_core.manage_catalogs')->toString();
+    $variables['cart_owner_name'] = $current_user->isAuthenticated() ? $current_user->getDisplayName() : '';
+
+    if (!isset($variables['#attached']['library'])) {
+      $variables['#attached']['library'] = [];
+    }
+    $variables['#attached']['library'][] = 'core/drupal.ajax';
+
+    return;
+  }
+
+  if (!$is_manage_clients_page) {
+    return;
+  }
+
+  $context = sangel_core_base_collect_manage_clients_context();
+
+  $variables['clients'] = $context['clients'];
+  $variables['clients_summary'] = $context['clients_summary'];
+  $variables['client_type_filters'] = $context['client_type_filters'];
+  $variables['create_client_url'] = $context['create_client_url'];
+  $variables['import_feed_url'] = $context['import_feed_url'];
+  $variables['catalog_overview_url'] = $context['catalog_overview_url'];
+  $variables['clients_overview_url'] = $context['clients_overview_url'];
+  $variables['clients_recent'] = $context['recent_clients'];
+  $variables['selected_client'] = $variables['clients'][0] ?? NULL;
+}
+
+/**
+ * Preprocesses the checkout form for custom theming.
+ */
+function sangel_core_base_preprocess_form__sangel_order_checkout_form(array &$variables): void {
+  $current_account = \Drupal::currentUser();
+  $account_entity = NULL;
+  if ($current_account->isAuthenticated()) {
+    $account_entity = User::load($current_account->id());
+  }
+
+  $snapshot = sangel_core_base_build_cart_snapshot(NULL, [
+    'account' => $account_entity ?: $current_account,
+    'viewer' => $current_account,
+  ]);
+
+  $variables['cart_items'] = $snapshot['items'];
+  $variables['cart_item_count'] = $snapshot['count'];
+  $variables['cart_total'] = $snapshot['total_formatted'];
+  $variables['cart_total_raw'] = $snapshot['total_raw'];
+  $variables['cart_is_empty'] = $snapshot['is_empty'];
+  $variables['cart_back_url'] = Url::fromRoute('sangel_core.client_cart')->toString();
+  $variables['cart_continue_url'] = Url::fromRoute('sangel_core.client_catalogue')->toString();
+  $variables['cart_checkout_title'] = t('Validation de commande');
+  $variables['cart_checkout_subtitle'] = t('Merci de vérifier votre sélection avant de confirmer.');
+
+  if ($snapshot['is_empty']) {
+    return;
+  }
+
+  if (isset($variables['form']['actions']['submit'])) {
+    $variables['form']['actions']['submit']['#value'] = t('Confirmer ma commande');
+    $variables['form']['actions']['submit']['#attributes']['class'] = [
+      'inline-flex',
+      'items-center',
+      'justify-center',
+      'rounded-full',
+      'bg-sangel-primary',
+      'px-6',
+      'py-3',
+      'text-sm',
+      'font-semibold',
+      'text-white',
+      'shadow',
+      'transition',
+      'hover:bg-sangel-primary/90',
+    ];
+  }
+
+  if (isset($variables['form']['actions']['cancel'])) {
+    $variables['form']['actions']['cancel']['#title'] = t('Modifier mon panier');
+    $variables['form']['actions']['cancel']['#attributes']['class'] = [
+      'inline-flex',
+      'items-center',
+      'justify-center',
+      'rounded-full',
+      'border',
+      'border-sangel-primary',
+      'px-6',
+      'py-3',
+      'text-sm',
+      'font-semibold',
+      'text-sangel-primary',
+      'transition',
+      'hover:bg-sangel-primary/10',
+    ];
+  }
+}
+
+function sangel_core_base_preprocess_sangel_core_cart_items(array &$variables): void {
+
+  $current_user = \Drupal::currentUser();
+  $roles = $current_user->getRoles();
+  $is_commercial = in_array('commercial', $roles, TRUE);
+
+  $override_items = isset($variables['cart_raw_items']) && is_array($variables['cart_raw_items'])
+    ? $variables['cart_raw_items']
+    : NULL;
+
+  $owner_id = NULL;
+  if (isset($variables['cart_owner_id'])) {
+    $owner_id = is_numeric($variables['cart_owner_id']) ? (int) $variables['cart_owner_id'] : NULL;
+  }
+
+  $owner_name = trim((string) ($variables['cart_owner_name'] ?? ''));
+
+  $read_only = !empty($variables['cart_is_read_only']);
+  if (!$read_only && $owner_id !== NULL && $current_user->isAuthenticated() && $owner_id !== (int) $current_user->id()) {
+    $read_only = TRUE;
+  }
+
+  $account = NULL;
+  if ($owner_id !== NULL) {
+    $account = User::load($owner_id) ?: NULL;
+  }
+
+  if ($override_items === NULL && $account instanceof UserInterface && (int) $account->id() !== (int) $current_user->id()) {
+    $override_items = sangel_core_base_load_cart_items_for_user($account, $current_user);
+  }
+
+  $cart_ctx = NULL;
+  if($is_commercial && $override_items === NULL) {
+     $read_only = TRUE;
+    $cart_ctx = sangel_core_base_cart_ctx();
+    $override_items = $cart_ctx['raw_items'] ?? NULL;
+  }
+
+  $viewer_account = NULL;
+  if ($current_user->isAuthenticated()) {
+    $viewer_account = User::load($current_user->id()) ?: NULL;
+  }
+
+  $snapshot = sangel_core_base_build_cart_snapshot($override_items, [
+    'allow_remove' => !$read_only,
+    'allow_update' => !$read_only,
+    'account' => $account instanceof UserInterface ? $account : $viewer_account,
+    'viewer' => $current_user,
+  ]);
+
+  $variables['is_commercial'] = $is_commercial;
+  $variables['cart_items'] = $snapshot['items'];
+  $variables['cart_item_count'] = $snapshot['count'];
+  $variables['cart_is_empty'] = $snapshot['is_empty'];
+  $variables['cart_total'] = $snapshot['total_formatted'];
+  $variables['cart_total_raw'] = $snapshot['total_raw'];
+
+  // Ensure the template receives the expected variables.
+  $variables['items'] = $snapshot['items'];
+  if (!isset($variables['empty_text']) || $variables['empty_text'] === NULL) {
+    $variables['empty_text'] = t('Panier vide');
+  }
+
+  $variables['cart_read_only'] = $read_only;
+  $variables['cart_actions_allowed'] = !$read_only && !empty($snapshot['allow_remove']);
+  $variables['cart_quantities_editable'] = !$read_only && !empty($snapshot['allow_update']);
+
+  $is_authenticated = $current_user->isAuthenticated();
+  if (!$read_only) {
+    $variables['cart_can_checkout'] = !$snapshot['is_empty'] && $is_authenticated;
+    $variables['cart_checkout_url'] = $is_authenticated
+      ? Url::fromRoute('sangel_order.checkout')->toString()
+      : Url::fromRoute('user.login', [], ['query' => ['destination' => '/compte-clients/panier']])->toString();
+    $variables['cart_continue_url'] = Url::fromRoute('sangel_core.client_catalogue')->toString();
+    $variables['cart_empty_cta_url'] = Url::fromRoute('sangel_core.manage_catalogs')->toString();
+  }
+  else {
+    $variables['cart_can_checkout'] = FALSE;
+    $variables['cart_checkout_url'] = NULL;
+    $variables['cart_continue_url'] = NULL;
+    $variables['cart_empty_cta_url'] = NULL;
+  }
+
+  if ($owner_name === '' && $owner_id !== NULL && $owner_id === (int) $current_user->id() && $is_authenticated) {
+    $owner_name = $current_user->getDisplayName();
+  }
+  elseif ($owner_name === '' && !$read_only && $is_authenticated) {
+    $owner_name = $current_user->getDisplayName();
+  }
+
+  $variables['cart_owner_name'] = $is_commercial ? $cart_ctx['owner_name'] :$owner_name;
+  $variables['cart_owner_id'] = $is_commercial ? $cart_ctx['owner_id'] : NULL;
+
+  $empty_text = $variables['cart_empty_text'] ?? ($variables['empty_text'] ?? NULL);
+  if (!is_string($empty_text) || $empty_text === '') {
+    $empty_text = t('Panier vide');
+  }
+  $variables['cart_empty_text'] = $empty_text;
+}
+
+/**
+ * Adds manage client data to the page template when needed.
+ */
+function sangel_core_base_preprocess_page(array &$variables): void {
+  $route_match = \Drupal::routeMatch();
+  $route_name = $route_match->getRouteName();
+
+  if ($route_name === 'sangel_core.manage_clients_account') {
+    $context = sangel_core_base_collect_manage_clients_context();
+    $variables['clients'] = $context['clients'];
+    $variables['clients_summary'] = $context['clients_summary'];
+    $variables['client_type_filters'] = $context['client_type_filters'];
+    $variables['create_client_url'] = $context['create_client_url'];
+    $variables['import_feed_url'] = $context['import_feed_url'];
+    $variables['catalog_overview_url'] = $context['catalog_overview_url'];
+    $variables['clients_overview_url'] = $context['clients_overview_url'];
+    $variables['clients_recent'] = $context['recent_clients'];
+    $variables['selected_client'] = $context['clients'][0] ?? NULL;
+  }
+
+  $gestion_suggestions = [
+    'sangel_core.manage_clients_create' => 'page__gestion__clients__ajouter',
+    'sangel_core.manage_clients_edit' => 'page__gestion__clients__modifier',
+    'sangel_catalog.commercial_import' => 'page__gestion__clients__import',
+    'sangel_core.manage_clients_orders' => 'page__gestion__clients__commandes',
+    'sangel_core.manage_clients_cart_page' => 'page__gestion__clients__panier',
+    'sangel_core.manage_clients_catalogs_page' => 'page__gestion__clients__catalogues',
+    'sangel_core.manage_clients_profile_page' => 'page__gestion__clients__fiche',
+  ];
+
+  if (isset($gestion_suggestions[$route_name])) {
+    $variables['theme_hook_suggestions'][] = $gestion_suggestions[$route_name];
+
+    $request = \Drupal::request();
+    $absoluteReferer = $request->headers->get('referer');
+    $backLink = sangel_core_base_compute_back_link();
+
+    if (!$backLink && $absoluteReferer) {
+      $host = $request->getSchemeAndHttpHost();
+      if (str_starts_with($absoluteReferer, $host)) {
+        $path = substr($absoluteReferer, strlen($host));
+        if ($path !== $request->getPathInfo()) {
+          $backLink = $path;
+        }
+      }
+    }
+
+    if (!$backLink) {
+      $backLink = Url::fromRoute('sangel_core.manage_clients_account')->toString();
+    }
+
+    $variables['gestion_back_link'] = $backLink;
+  }
+
+  if (in_array($route_name, [
+    'sangel_core.manage_clients_edit',
+    'sangel_core.manage_clients_orders',
+    'sangel_core.manage_clients_cart_page',
+    'sangel_core.manage_clients_catalogs_page',
+    'sangel_core.manage_clients_profile_page',
+  ], TRUE)) {
+    $client_node = $route_match->getParameter('node');
+    if (!$client_node instanceof NodeInterface || $client_node->bundle() !== 'client') {
+      return;
+    }
+
+    $current_account = \Drupal::currentUser();
+    $date_formatter = \Drupal::service('date.formatter');
+
+    $owner = $client_node->getOwner();
+    $variables['client_node'] = $client_node;
+    $variables['gestion_client_owner_id'] = ($owner instanceof UserInterface && $owner->id()) ? (int) $owner->id() : NULL;
+    $variables['gestion_client_owner_argument'] = ($owner instanceof UserInterface && $owner->id()) ? (string) $owner->id() : NULL;
+    $variables['gestion_client_summary'] = [
+      'label' => $client_node->label(),
+      'company' => $client_node->hasField('field_reason_social') && !$client_node->get('field_reason_social')->isEmpty()
+        ? $client_node->get('field_reason_social')->value
+        : '',
+      'email' => $client_node->hasField('field_mail') && !$client_node->get('field_mail')->isEmpty()
+        ? $client_node->get('field_mail')->value
+        : ($owner instanceof UserInterface ? $owner->getEmail() : ''),
+      'phone' => $client_node->hasField('field_phonenumber') && !$client_node->get('field_phonenumber')->isEmpty()
+        ? $client_node->get('field_phonenumber')->value
+        : '',
+      'status' => $client_node->isPublished() ? 'published' : 'unpublished',
+      'status_label' => $client_node->isPublished() ? t('Actif') : t('Inactif'),
+      'owner_name' => $owner instanceof UserInterface ? $owner->getDisplayName() : '',
+      'owner_mail' => $owner instanceof UserInterface ? $owner->getEmail() : '',
+      'created' => $client_node->getCreatedTime()
+        ? $date_formatter->format($client_node->getCreatedTime(), 'short')
+        : '',
+      'updated' => $client_node->getChangedTime()
+        ? $date_formatter->format($client_node->getChangedTime(), 'short')
+        : '',
+      'owner_last_access' => $owner instanceof UserInterface && $owner->getLastAccessedTime()
+        ? $date_formatter->format($owner->getLastAccessedTime(), 'short')
+        : '',
+    ];
+
+    if ($route_name === 'sangel_core.manage_clients_cart_page' && $owner instanceof UserInterface && $owner->id()) {
+      $cart_raw_items = sangel_core_base_load_cart_items_for_user($owner, $current_account);
+
+      $cart_ctx = [
+        'raw_items' => $cart_raw_items,
+        'owner_id' => (int) $owner->id(),
+        'owner_name' => $owner->getDisplayName(),
+      ];
+
+      sangel_core_base_cart_ctx($cart_ctx);
+
+
+
+      $variables['gestion_client_cart_render'] = [
+        '#theme' => 'sangel_core_cart_items',
+        '#cart_raw_items' => $cart_raw_items,
+        '#cart_owner_id' => (int) $owner->id(),
+        '#cart_owner_name' => $owner->getDisplayName(),
+        '#cart_is_read_only' => TRUE,
+        '#cart_empty_text' => t('Panier vide!'),
+        '#attached' => [
+          'library' => ['core/drupal.ajax'],
+        ],
+      ];
+    }
+    elseif ($route_name === 'sangel_core.manage_clients_profile_page') {
+      $variables['gestion_client_import_form'] = \Drupal::formBuilder()->getForm(\Drupal\sangel_catalog\Form\CommercialFeedImportForm::class, [
+        'prefill_client' => $client_node->id(),
+      ]);
+    }
+  }
+}
+
+/**
+ * Builds a safe back link for gestion pages.
+ */
+function sangel_core_base_compute_back_link(): ?string {
+  $request = \Drupal::request();
+
+  $destination = $request->query->get('destination');
+  if (is_string($destination) && $destination !== '') {
+    $destination = '/' . ltrim($destination, '/');
+    try {
+      return Url::fromUserInput($destination)->toString();
+    }
+    catch (\Throwable $throwable) {
+      // Ignore invalid destination and fallback to referer.
+    }
+  }
+
+  $referer = $request->headers->get('referer');
+  if (!$referer) {
+    return NULL;
+  }
+
+  $host = $request->getSchemeAndHttpHost();
+  if (str_starts_with($referer, $host)) {
+    return $referer;
+  }
+
+  return NULL;
+}
+
+/**
+ * Applies consistent styling to gestion forms.
+ */
+function sangel_core_base_style_gestion_form(array &$form): void {
+  $form['#attributes']['class'] = array_merge($form['#attributes']['class'] ?? [], [
+    'space-y-6',
+  ]);
+  $form['#attached']['library'][] = 'core/drupal.form';
+
+  foreach (Element::children($form) as $key) {
+    if ($key === 'actions' || str_starts_with($key, '#')) {
+      continue;
+    }
+    $element = &$form[$key];
+
+    if (!empty($element['#type']) && in_array($element['#type'], ['hidden', 'value'], TRUE)) {
+      continue;
+    }
+
+    $type = $element['#type'] ?? '';
+
+    $element['#title_display'] = 'invisible';
+    $element['#description_display'] = 'after';
+    $element['#description_attributes']['class'] = array_merge($element['#description_attributes']['class'] ?? [], ['mt-2', 'text-xs', 'text-sangel-text/60']);
+    $element['#wrapper_attributes']['class'] = array_merge($element['#wrapper_attributes']['class'] ?? [], ['space-y-2']);
+
+    switch ($type) {
+      case 'radios':
+        $element['#attributes']['class'] = array_merge($element['#attributes']['class'] ?? [], [
+          'flex',
+          'flex-wrap',
+          'gap-2',
+          'rounded-full',
+          'bg-sangel-ice/70',
+          'p-1',
+        ]);
+        if (!empty($element['#options'])) {
+          foreach (array_keys($element['#options']) as $option_key) {
+            $element['#option_attributes'][$option_key]['class'] = array_merge($element['#option_attributes'][$option_key]['class'] ?? [], [
+              'inline-flex',
+              'items-center',
+              'justify-center',
+              'rounded-full',
+              'px-4',
+              'py-1.5',
+              'text-sm',
+              'font-semibold',
+              'text-sangel-text/70',
+              'transition',
+            ]);
+          }
+        }
+        break;
+
+      case 'select':
+        $element['#attributes']['class'] = array_merge($element['#attributes']['class'] ?? [], [
+          'w-full',
+          'rounded-full',
+          'border',
+          'border-sangel-ice',
+          'bg-white',
+          'px-5',
+          'py-3',
+          'text-sm',
+          'font-medium',
+          'text-sangel-text',
+          'shadow-sm',
+          'focus:border-sangel-primary',
+        ]);
+        $element['#attributes']['style'] = trim(($element['#attributes']['style'] ?? '') . '; outline: none;');
+        break;
+
+      case 'managed_file':
+        $element['#attributes']['class'] = array_merge($element['#attributes']['class'] ?? [], ['space-y-3']);
+        if (isset($element['upload_button'])) {
+          $element['upload_button']['#attributes']['class'] = array_merge($element['upload_button']['#attributes']['class'] ?? [], [
+            'inline-flex',
+            'items-center',
+            'justify-center',
+            'rounded-full',
+            'border',
+            'border-sangel-primary',
+            'px-4',
+            'py-2',
+            'text-sm',
+            'font-semibold',
+            'text-sangel-primary',
+            'transition',
+            'hover:bg-sangel-primary/10',
+          ]);
+        }
+        break;
+
+      default:
+        $element['#attributes']['class'] = array_merge($element['#attributes']['class'] ?? [], [
+          'w-full',
+          'rounded-xl',
+          'border',
+          'border-sangel-ice',
+          'bg-white',
+          'px-5',
+          'py-3',
+          'text-sm',
+          'text-sangel-text',
+          'shadow-sm',
+          'focus:border-sangel-primary',
+        ]);
+        $element['#attributes']['style'] = trim(($element['#attributes']['style'] ?? '') . '; outline: none;');
+        break;
+    }
+  }
+
+  if (isset($form['actions'])) {
+    $form['actions']['#attributes']['class'] = array_merge($form['actions']['#attributes']['class'] ?? [], [
+      'flex',
+      'flex-wrap',
+      'items-center',
+      'gap-3',
+    ]);
+
+    foreach (Element::children($form['actions']) as $action_key) {
+      $action = &$form['actions'][$action_key];
+      $classes = [
+        'inline-flex',
+        'items-center',
+        'justify-center',
+        'rounded-full',
+        'px-6',
+        'py-3',
+        'text-sm',
+        'font-semibold',
+        'transition',
+        'focus:outline-none',
+        'focus:ring-2',
+        'focus:ring-sangel-primary/20',
+      ];
+      if (($action['#button_type'] ?? '') === 'primary') {
+        $classes = array_merge($classes, [
+          'bg-sangel-primary',
+          'text-white',
+          'shadow',
+          'hover:bg-sangel-primary/90',
+        ]);
+      }
+      else {
+        $classes = array_merge($classes, [
+          'border',
+          'border-sangel-primary',
+          'text-sangel-primary',
+          'hover:bg-sangel-primary/10',
+        ]);
+      }
+      $action['#attributes']['class'] = array_merge($action['#attributes']['class'] ?? [], $classes);
+    }
+  }
+}
+
+/**
+ * Styles the commercial feed import form.
+ */
+function sangel_core_base_form_sangel_catalog_commercial_feed_import_alter(array &$form, FormStateInterface $form_state): void {
+  sangel_core_base_style_gestion_form($form);
+}
+
+/**
+ * Styles the client node form for gestion pages.
+ */
+function sangel_core_base_form_node_client_form_alter(array &$form, FormStateInterface $form_state): void {
+  sangel_core_base_style_gestion_form($form);
+
+  if (isset($form['field_user'])) {
+    $form['field_user']['#access'] = FALSE;
+  }
+
+  if (isset($form['revision_information'])) {
+    $form['revision_information']['#access'] = FALSE;
+  }
+
+  if (isset($form['actions']['preview'])) {
+    $form['actions']['preview']['#access'] = FALSE;
+  }
+
+  $form['#attributes']['class'][] = 'space-y-6';
+
+  $cards = [
+    'account' => [
+      'fields' => ['field_mail', 'field_username', 'field_password'],
+      'title' => t('Compte utilisateur'),
+      'description' => t('Ces informations seront utilisées pour créer l’accès du client à la plateforme.'),
+    ],
+    'profile' => [
+      'fields' => ['title', 'field_reason_social', 'field_phonenumber', 'field_client_type'],
+      'title' => t('Profil client'),
+      'description' => t('Complétez les informations commerciales du client pour personnaliser son espace.'),
+    ],
+  ];
+
+  $form['gestion_cards'] = [
+    '#type' => 'container',
+    '#weight' => -20,
+    '#attributes' => [
+      'class' => ['space-y-6'],
+    ],
+  ];
+
+  foreach ($cards as $key => $info) {
+    $form['gestion_cards'][$key] = [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['space-y-4', 'rounded-2xl', 'border', 'border-sangel-ice', 'bg-white', 'p-6', 'shadow-sm'],
+      ],
+      'header' => [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['space-y-1']],
+        'title' => [
+          '#type' => 'html_tag',
+          '#tag' => 'h2',
+          '#value' => $info['title'],
+          '#attributes' => ['class' => ['text-lg', 'font-semibold', 'text-sangel-text']],
+        ],
+        'description' => [
+          '#markup' => '<p class="text-sm text-sangel-text/70">' . Html::escape($info['description']) . '</p>',
+        ],
+      ],
+    ];
+
+    foreach ($info['fields'] as $field) {
+      if (!isset($form[$field])) {
+        continue;
+      }
+
+      $form['gestion_cards'][$key][$field] = $form[$field];
+      unset($form[$field]);
+    }
+  }
+
+  if (isset($form['gestion_cards']['account']['field_password']['widget'][0]['value'])) {
+    $form['gestion_cards']['account']['field_password']['widget'][0]['value']['#attributes']['placeholder'] = t('Définissez un mot de passe temporaire');
+    $form['gestion_cards']['account']['field_password']['#title_display'] = 'invisible';
+  }
+  if (isset($form['gestion_cards']['account']['field_username']['widget'][0]['value'])) {
+    $form['gestion_cards']['account']['field_username']['widget'][0]['value']['#attributes']['placeholder'] = t('Identifiant de connexion');
+    $form['gestion_cards']['account']['field_username']['#title_display'] = 'invisible';
+  }
+  if (isset($form['gestion_cards']['account']['field_mail']['widget'][0]['value'])) {
+    $form['gestion_cards']['account']['field_mail']['widget'][0]['value']['#attributes']['placeholder'] = t('client@example.com');
+    $form['gestion_cards']['account']['field_mail']['#title_display'] = 'invisible';
+  }
+  if (isset($form['gestion_cards']['account']['field_phonenumber']['widget'][0]['value'])) {
+    $form['gestion_cards']['account']['field_phonenumber']['widget'][0]['value']['#attributes']['placeholder'] = t('+33 1 23 45 67 89');
+    $form['gestion_cards']['account']['field_phonenumber']['#title_display'] = 'invisible';
+  }
+
+  if (isset($form['gestion_cards']['account'])) {
+    $form['gestion_cards']['account']['tips'] = [
+      '#markup' => '<div class="rounded-2xl bg-sangel-ice/60 p-4 text-xs text-sangel-text/70">' . Html::escape(t('Un e-mail de bienvenue sera automatiquement envoyé une fois le client créé.')) . '</div>',
+    ];
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function sangel_core_base_theme($existing, $type, $theme, $path) {
+  return [
+    'sangel_core_placeholder_page' => [
+      'variables' => [
+        'identifier' => NULL,
+        'title' => NULL,
+      ],
+      'template' => 'sangel-core-placeholder-page',
+    ],
+    'sangel_core_cart_items' => [
+      'variables' => [
+        'items' => [],
+        'empty_text' => NULL,
+      ],
+      'template' => 'sangel-core-cart-items',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_views_plugins_display_alter().
+ */
+function sangel_core_base_views_plugins_display_alter(array &$plugins): void {
+  \Drupal::logger('sangel_core_base')->notice('sangel_core_base_views_plugins_display_alter invoked.');
+
+  if (!empty($plugins['data_export'])) {
+    $plugins['data_export']['class'] = 'Drupal\\sangel_core_base\\Plugin\\views\\display\\DataExport';
+    $plugins['data_export']['provider'] = 'sangel_core_base';
+    $module_path = \Drupal::service('extension.list.module')->getPath('sangel_core_base');
+    $plugins['data_export']['path'] = $module_path . '/src/Plugin/views/display';
+
+    \Drupal::logger('sangel_core_base')->debug('Override of data_export display plugin applied.');
+
+    static $cleared = FALSE;
+    if (!$cleared) {
+      $cleared = TRUE;
+      \Drupal::service('plugin.manager.views.display')->clearCachedDefinitions();
+    }
+  }
+}
+
+/**
+ * Ensures our Views plugin alter runs last.
+ */
+function sangel_core_base_module_implements_alter(array &$implementations, $hook): void {
+  if ($hook === 'views_plugins_display_alter' && isset($implementations['sangel_core_base'])) {
+    $implementation = $implementations['sangel_core_base'];
+    unset($implementations['sangel_core_base']);
+    $implementations['sangel_core_base'] = $implementation;
+  }
+}

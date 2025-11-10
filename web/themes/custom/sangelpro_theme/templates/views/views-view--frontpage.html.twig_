@@ -1,0 +1,49 @@
+{# Custom frontpage view with layout toggle #}
+{{ title_prefix }}
+{% if title %}
+  <h2 class="catalog-view__title">{{ title }}</h2>
+{% endif %}
+{{ title_suffix }}
+
+{% if header %}
+  <div class="catalog-view__header">{{ header }}</div>
+{% endif %}
+
+<div{{ attributes }}>
+  <div class="catalog-view__controls" role="group" aria-label="{{ 'Layout options'|t }}">
+    <a href="{{ layout_grid_url }}" class="catalog-view__toggle {{ layout == 'grid' ? 'is-active' }}" aria-pressed="{{ layout == 'grid' ? 'true' : 'false' }}">
+      {{ 'Grille'|t }}
+    </a>
+    <a href="{{ layout_list_url }}" class="catalog-view__toggle {{ layout == 'list' ? 'is-active' }}" aria-pressed="{{ layout == 'list' ? 'true' : 'false' }}">
+      {{ 'Liste'|t }}
+    </a>
+  </div>
+
+  {% if exposed %}
+    <div class="catalog-view__exposed">{{ exposed }}</div>
+  {% endif %}
+
+  {% if attachment_before %}
+    <div class="catalog-view__attachment catalog-view__attachment--before">{{ attachment_before }}</div>
+  {% endif %}
+
+  {% if rows %}
+    <div class="catalog-view__content">
+      {{ rows }}
+    </div>
+  {% elseif empty %}
+    <div class="catalog-view__empty">{{ empty }}</div>
+  {% endif %}
+
+  {% if pager %}
+    <div class="catalog-view__pager">{{ pager }}</div>
+  {% endif %}
+
+  {% if attachment_after %}
+    <div class="catalog-view__attachment catalog-view__attachment--after">{{ attachment_after }}</div>
+  {% endif %}
+
+  {% if footer %}
+    <div class="catalog-view__footer">{{ footer }}</div>
+  {% endif %}
+</div>

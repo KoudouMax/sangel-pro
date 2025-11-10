@@ -1,0 +1,5 @@
+sangel_catalog.user_catalogs:
+  route_name: sangel_catalog.user_catalogs
+  base_route: entity.user.canonical
+  title: 'Catalogs'
+  weight: 20

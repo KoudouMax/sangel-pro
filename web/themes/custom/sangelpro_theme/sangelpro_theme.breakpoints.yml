@@ -1,0 +1,23 @@
+sangelpro_theme.mobile:
+  label: mobile
+  mediaQuery: '(min-width: 0px)'
+  weight: 0
+  multipliers:
+    - 1x
+    - 2x
+
+sangelpro_theme.tablet:
+  label: tablet
+  mediaQuery: '(min-width: 768px)'
+  weight: 1
+  multipliers:
+    - 1x
+    - 2x
+
+sangelpro_theme.desktop:
+  label: desktop
+  mediaQuery: '(min-width: 1024px)'
+  weight: 2
+  multipliers:
+    - 1x
+    - 2x

@@ -1,0 +1,139 @@
+<?php
+
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Render\Element;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Template\Attribute;
+use Drupal\node\NodeInterface;
+
+/**
+ * Controls access to order nodes.
+ */
+function sangel_order_node_access(NodeInterface $node, $op, AccountInterface $account) {
+  if ($node->bundle() !== 'order') {
+    return AccessResult::neutral();
+  }
+
+  if ($account->hasPermission('administer sangel orders') || $account->hasPermission('view all sangel orders')) {
+    return AccessResult::allowed()->cachePerPermissions();
+  }
+
+  if ($op === 'view') {
+    if ((int) $node->getOwnerId() === (int) $account->id()) {
+      return AccessResult::allowed()->cachePerUser();
+    }
+    return AccessResult::forbidden()->cachePerUser();
+  }
+
+  // Updates and deletes restricted to administrators only.
+  return AccessResult::forbidden()->cachePerPermissions();
+}
+
+/**
+ * Implements hook_theme().
+ */
+function sangel_order_theme($existing, $type, $theme, $path): array {
+  return [
+    'sangel_order_cart_items' => [
+      'render element' => 'element',
+      'template' => 'sangel-order-cart-items',
+    ],
+    'sangel_order_cart_item' => [
+      'render element' => 'element',
+      'template' => 'sangel-order-cart-item',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_node_view().
+ */
+function sangel_order_node_view___(array &$build, NodeInterface $node, $view_mode, $langcode) {
+  if ($node->bundle() !== 'order') {
+    return;
+  }
+
+  /** @var \Drupal\sangel_order\Service\CartManager $cart_manager */
+  $cart_manager = \Drupal::service('sangel_order.cart_manager');
+  $items = $cart_manager->loadOrderItems($node);
+  if (!$items) {
+    return;
+  }
+
+  $header = [
+    ['data' => t('Produit')],
+    ['data' => t('SKU')],
+    ['data' => t('Quantité'), 'class' => ['text-right']],
+    ['data' => t('Prix unitaire'), 'class' => ['text-right']],
+    ['data' => t('Total'), 'class' => ['text-right']],
+  ];
+
+  $rows = [];
+  foreach ($items as $item) {
+    $product = $item->hasField('field_product') ? $item->get('field_product')->entity : NULL;
+    $product_title = $item->hasField('field_product_title') ? (string) $item->get('field_product_title')->value : $item->label();
+    $product_link = $product ? $product->toLink($product_title) : ['#markup' => $product_title];
+    $sku = $item->hasField('field_product_sku') ? (string) $item->get('field_product_sku')->value : ($product && $product->hasField('field_sku') ? (string) $product->get('field_sku')->value : t('N/A')) ;
+    $quantity = $item->hasField('field_quantity') ? (int) $item->get('field_quantity')->value : 0;
+    $unit_price = $item->hasField('field_unit_price') ? (float) $item->get('field_unit_price')->value : 0;
+    $total_price = $item->hasField('field_total_price') ? (float) $item->get('field_total_price')->value : ($unit_price * $quantity);
+
+    $rows[] = [
+      'data' => [
+        $product_link,
+        $sku ?: t('N/A'),
+        [
+          'data' => $quantity,
+          'class' => ['text-right'],
+        ],
+        [
+          'data' => number_format($unit_price, 0, ',', ' ') . ' F CFA',
+          'class' => ['text-right'],
+        ],
+        [
+          'data' => number_format($total_price, 0, ',', ' ') . ' F CFA',
+          'class' => ['text-right'],
+        ],
+      ],
+    ];
+  }
+
+  $build['sangel_order_items'] = [
+    '#type' => 'container',
+    '#attributes' => ['class' => ['sangel-order-items']],
+    'table' => [
+      '#type' => 'table',
+      '#header' => $header,
+      '#rows' => $rows,
+      '#attributes' => ['class' => ['sangel-order-items__table']],
+    ],
+  ];
+}
+
+/**
+ * Prepares variables for the cart items wrapper template.
+ */
+function template_preprocess_sangel_order_cart_items(array &$variables): void {
+  $element = $variables['element'];
+  $variables['attributes'] = new Attribute($element['#attributes'] ?? []);
+  $variables['items'] = [];
+
+  foreach (Element::children($element) as $child) {
+    $variables['items'][] = $element[$child];
+  }
+
+  $variables['empty_message'] = $element['#empty_message'] ?? NULL;
+}
+
+/**
+ * Prepares variables for a single cart item row.
+ */
+function template_preprocess_sangel_order_cart_item(array &$variables): void {
+  $element = $variables['element'];
+  $variables['attributes'] = new Attribute($element['#attributes'] ?? []);
+  $variables['title'] = $element['title'] ?? [];
+  $variables['unit_price'] = $element['unit_price'] ?? [];
+  $variables['quantity'] = $element['quantity'] ?? [];
+  $variables['subtotal'] = $element['subtotal'] ?? [];
+  $variables['remove'] = $element['remove'] ?? [];
+}

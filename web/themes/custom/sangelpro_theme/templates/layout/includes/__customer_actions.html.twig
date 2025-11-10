@@ -1,0 +1,101 @@
+{% if logged_in %}
+  {% set current_route = current_route_name|default('') %}
+
+	{% set customer_actions = [
+    {
+      'key': 'client_accounts',
+      'variant': 'client-accounts',
+      'icon': 'users',
+      'label': 'Compte clients'|t,
+      'url': path('sangel_core.manage_clients_account'),
+      'route': 'sangel_core.manage_clients_account',
+      'active_routes': [
+        'sangel_core.manage_clients_account',
+        'sangel_core.manage_clients_catalogs_page',
+        'sangel_core.manage_clients_orders',
+        'sangel_core.manage_clients_cart_page',
+        'sangel_core.manage_clients_profile_page'
+      ]
+    },
+    {
+      'key': 'catalogs',
+      'variant': 'customer-catalogs',
+      'icon': 'catalog',
+      'label': 'Les catalogues'|t,
+      'url': path('sangel_core.manage_catalogs'),
+      'route': 'sangel_core.manage_catalogs',
+      'active_routes': [
+        'sangel_core.manage_catalogs',
+        'sangel_core.manage_selections'
+      ]
+    },
+    {
+      'key': 'catalog',
+      'variant': 'catalog',
+      'icon': 'heart',
+      'label': 'Ma sélection'|t,
+      'url': path('sangel_core.manage_selections'),
+      'route': 'sangel_core.manage_selections',
+      'active_routes': [
+        'sangel_core.manage_selections'
+      ],
+      'counter': counter_selection,
+      'has_counter': true
+    },
+
+    {
+      'key': 'history',
+      'variant': 'history',
+      'icon': 'history',
+      'label': 'Mon Historique'|t,
+      'url': path('sangel_core.manage_history'),
+      'route': 'sangel_core.manage_history',
+      'active_routes': [
+        'sangel_core.manage_history'
+      ]
+    },
+    {
+      'key': 'logout',
+      'variant': 'logout',
+      'icon': 'logout',
+      'label': 'Déconnexion'|t,
+      'url': path('user.logout'),
+      'route': 'user.logout'
+    }
+  ] %}
+
+	{% for action in customer_actions %}
+		{% set attributes = create_attribute({'id': 'sangel_header_counter__' ~ action.key}) %}
+    {% set is_active = false %}
+    {% if action.active_routes is defined %}
+      {% set is_active = current_route in action.active_routes %}
+    {% elseif action.route is defined %}
+      {% set is_active = action.route == current_route %}
+    {% endif %}
+
+    {{ include('@sangelpro_theme/components/header-counter.html.twig', {
+      attributes: attributes,
+      variant: action.variant,
+      url: action.url,
+      icon: action.icon,
+      label: action.label,
+      counter: action.counter|default(0),
+      has_counter: action.has_counter,
+      is_active: is_active
+    }) }}
+	{% endfor %}
+
+{% else %}
+  {% set current_route = current_route_name|default('') %}
+  {% set login_attributes = create_attribute({'id': 'sangel_header_counter__login'}) %}
+  {{ include('@sangelpro_theme/components/header-counter.html.twig', {
+    attributes: login_attributes,
+    variant: 'login',
+    url: path('user.login'),
+    icon: 'login',
+    label: 'Connexion'|t,
+    counter: 0,
+    has_counter: false,
+    is_active: current_route == 'user.login'
+    }) }}
+{% endif %}

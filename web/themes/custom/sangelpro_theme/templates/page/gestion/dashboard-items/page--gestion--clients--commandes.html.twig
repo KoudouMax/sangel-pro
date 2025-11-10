@@ -1,0 +1,29 @@
+{% set summary = gestion_client_summary ?? {} %}
+{% set owner_id = gestion_client_owner_id ?? null %}
+{% set owner_argument = gestion_client_owner_argument ?? null %}
+
+{% embed '@sangelpro_theme/layout/page--gestion.html.twig' with { show_back_link: true, title: 'Commandes de @client.'|t({'@client': summary.label}) } %}
+
+	{% block content %}
+		<div class="space-y-6">
+			<div class="rounded-2xl border border-sangel-ice bg-white p-6 shadow-sm">
+				<div class="flex flex-col gap-2">
+					<h2 class="text-xl font-semibold text-sangel-text">{{ 'Historique des commandes'|t }}</h2>
+					{% if summary.label %}
+						<p class="text-sm text-sangel-text/70">
+							{{ 'Client : @client'|t({'@client': summary.label}) }}
+							{% if summary.company %}
+								<span class="text-sangel-text/50">·
+									{{ summary.company }}</span>
+							{% endif %}
+						</p>
+					{% endif %}
+				</div>
+			</div>
+			<div class="rounded-2xl border border-sangel-ice bg-white p-6 shadow-sm">
+				{{ drupal_view('orders', 'user_order_history', owner_argument is not null ? owner_argument : '') }}
+			</div>
+			{{ page.content }}
+		</div>
+	{% endblock %}
+{% endembed %}

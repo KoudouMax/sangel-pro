@@ -1,0 +1,19 @@
+{% if items %}
+  <div class="sangel-cart-items-wrapper" data-sangel-cart-items-wrapper>
+    <ul class="sangel-cart-items" data-sangel-cart-items>
+      {% for item in items %}
+        <li id="{{ item.id }}" class="sangel-cart-items__item">
+          <span class="sangel-cart-items__product">{{ item.product }}</span>
+          <span class="sangel-cart-items__quantity">× {{ item.quantity }}</span>
+          <span class="sangel-cart-items__actions">
+            {{ item.remove_link }}
+          </span>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% else %}
+  <div class="sangel-cart-items-wrapper" data-sangel-cart-items-wrapper>
+    <p class="sangel-cart-items__empty">{{ empty_text }}</p>
+  </div>
+{% endif %}

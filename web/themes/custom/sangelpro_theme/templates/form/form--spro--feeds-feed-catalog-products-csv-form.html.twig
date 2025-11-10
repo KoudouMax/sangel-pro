@@ -1,0 +1,13 @@
+{% set label = label|default('Importer un fichier CSV'|t) %}
+{% set description = description|default('Déposez le fichier CSV du client pour ajouter les produits à son catalogue.'|t) %}
+
+<div class="sangel-import-form">
+  <header class="sangel-import-form__header">
+    <h2 class="sangel-import-form__title">{{ label }}</h2>
+    <p class="sangel-import-form__description">{{ description }}</p>
+  </header>
+
+  <form{{ attributes.addClass('sangel-import-form__body') }}>
+    {{ children }}
+  </form>
+</div>

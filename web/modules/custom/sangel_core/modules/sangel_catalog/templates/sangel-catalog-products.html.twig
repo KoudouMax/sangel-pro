@@ -1,0 +1,13 @@
+{#
+ # Renders the list of products assigned to a catalog.
+ #}
+{% set wrapper_classes = ['sangel-catalog-products-list'] %}
+<div{{ attributes.addClass(wrapper_classes) }}>
+  {% if items %}
+    {% for item in items %}
+      {{ item }}
+    {% endfor %}
+  {% elseif empty_message %}
+    <div class="sangel-catalog-products__empty">{{ empty_message }}</div>
+  {% endif %}
+</div>

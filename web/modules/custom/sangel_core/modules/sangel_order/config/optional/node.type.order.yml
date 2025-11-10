@@ -1,0 +1,12 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+name: Order
+type: order
+description: 'Customer order.'
+help: null
+new_revision: false
+preview_mode: 0
+display_submitted: false

@@ -1,0 +1,58 @@
+{#
+ /**
+  * @file
+  * Theme override for the Views Data Export icon.
+  *
+  * Variables available:
+  * - url: Link destination for the export.
+  * - format: Machine name of the export format (csv, json, ...).
+  * - attributes: Link attributes (mutable Attribute object).
+  */
+#}
+{% set format_label = (format ?? 'export')|upper %}
+{% set link_label = 'Télécharger @format'|t({'@format': format_label}) %}
+
+{% set icon_markup %}
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M12 3v12"/>
+    <path d="M6 11l6 6 6-6"/>
+    <path d="M5 19h14"/>
+  </svg>
+{% endset %}
+
+{% set base_classes = [
+  'sangel-export-icon',
+  'inline-flex',
+  'items-center',
+  'gap-2',
+  'rounded-full',
+  'border',
+  'border-sangel-primary',
+  'px-3',
+  'py-1.5',
+  'text-xs',
+  'font-semibold',
+  'uppercase',
+  'tracking-[0.28em]',
+  'text-sangel-primary',
+  'transition',
+  'hover:bg-sangel-primary/10',
+  'focus:outline-none',
+  'focus:ring-2',
+  'focus:ring-sangel-primary/20'
+] %}
+
+{% set attr = attributes.addClass(base_classes).setAttribute('data-export-format', format_label) %}
+{% if not attr.hasAttribute('title') %}
+  {% set attr = attr.setAttribute('title', link_label) %}
+{% endif %}
+{% if not attr.hasAttribute('aria-label') %}
+  {% set attr = attr.setAttribute('aria-label', link_label) %}
+{% endif %}
+
+<a href="{{ url }}"{{ attr }}>
+  <span class="inline-flex h-4 w-4 items-center justify-center">
+    {{ icon_markup|raw }}
+  </span>
+  <span class="leading-none">{{ format_label }}</span>
+</a>

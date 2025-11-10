@@ -1,0 +1,87 @@
+{# Carte stylisée pour un feed catalog_products_csv. #}
+{% set cover_field = content.field_cover ?? null %}
+{% set cover_markup = cover_field ? cover_field|render : '' %}
+{% set has_cover = cover_markup|trim is not empty %}
+
+{% set client_markup = content.field_client ?? null %}
+{% set client_markup = client_markup ? client_markup|render : '' %}
+{% set client_type_markup = content.field_client_type ?? null %}
+{% set client_type_markup = client_type_markup ? client_type_markup|render : '' %}
+{% set current_route = app.request ? app.request.attributes.get('_route') : '' %}
+{% set is_feed_canonical = current_route == 'entity.feeds_feed.canonical' %}
+
+{% set additional_content = content|without('field_cover', 'field_client', 'field_client_type', 'links') %}
+{% set additional_markup = additional_content ? additional_content|render : '' %}
+
+{% set feed_url = path('entity.feeds_feed.canonical', {'feeds_feed': feed.id()}) %}
+{% set imported_time = feed.getImportedTime() %}
+{% set imported_label = imported_time ? imported_time|format_date('short') : 'Jamais importé'|t %}
+{% set next_time = feed.getNextImportTime() %}
+{% set next_label = next_time > 0 ? next_time|format_date('short') : 'Non planifié'|t %}
+{% set item_count = feed.getItemCount() %}
+{% set is_active = feed.isActive() %}
+
+{% set classes = [
+  'sangel-feed-card',
+  'overflow-hidden',
+  'rounded-3xl',
+  'border',
+  'border-sangel-ice-strong',
+  'bg-white',
+  'shadow-lg',
+  'transition',
+  'hover:-translate-y-1',
+  'hover:shadow-xl',
+  'mb-2'
+] %}
+
+{% set link_attributes = {
+  'href': feed_url,
+  'class': 'group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sangel-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white'
+} %}
+
+<article{{attributes.addClass(classes)}}>
+	<a{{create_attribute(link_attributes)}}>
+		<div class="relative">
+			<div class="aspect-[5/1] overflow-hidden bg-sangel-ice">
+				{% if has_cover %}
+					<div class="h-full w-full object-cover">
+						{{ cover_markup }}
+					</div>
+				{% else %}
+					<div class="flex h-full w-full items-center justify-center text-sm font-semibold text-sangel-text/50">
+						{{ feed.label() }}
+					</div>
+				{% endif %}
+			</div>
+			<div class="absolute inset-0 bg-gradient-to-t from-sangel-text/80 via-sangel-text/20 to-transparent transition-opacity group-hover:opacity-90"></div>
+			<div class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-6 text-white">
+				<div>
+					<h3 class="text-lg font-semibold leading-tight text-white">
+						{{ feed.label() }}
+					</h3>
+				</div>
+				<span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase">
+					{{ is_active ? 'Actif'|t : 'Inactif'|t }}
+					<span class="h-2 w-2 rounded-full {{ is_active ? 'bg-emerald-300' : 'bg-sangel-text/50' }}"></span>
+				</span>
+			</div>
+		</div>
+
+		<div class="flex items-center justify-between gap-4 px-6 py-4 text-sm text-sangel-text/70">
+			<span class="inline-flex items-center gap-2 rounded-full bg-sangel-ice px-3 py-1 text-xs font-semibold text-sangel-primary">
+				{{ item_count }}
+				<span class="text-sangel-text/60">{{ 'produits importés'|t }}</span>
+			</span>
+			{% if not is_feed_canonical %}
+				<span class="inline-flex items-center gap-2 text-sangel-primary transition group-hover:translate-x-1 group-hover:text-sangel-primary-dark">
+					{{ 'Ouvrir le flux'|t }}
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewbox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12l-7.5 7.5M21 12H3"/>
+					</svg>
+				</span>
+			{% endif %}
+		</div>
+	</a>
+
+</article>

@@ -1,0 +1,36 @@
+{% if q is not empty %}
+  {{ q }}
+{% endif %}
+
+{% set region = form['#context']['region'] ?? form['#region'] ?? '' %}
+{% set rendered_form = form|without('title', 'actions') %}
+{% if region == 'filters' %}
+  {% set rendered_form = rendered_form|without('field_family_target_id', 'field_sub_family_target_id') %}
+{% endif %}
+
+<form{{ attributes.addClass('sangel-search') }}>
+  <div class="sangel-search">
+    <div class="sangel-search__icon" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7" />
+        <line x1="20" y1="20" x2="16.65" y2="16.65" />
+      </svg>
+    </div>
+
+    <div class="sangel-search__widgets hidden">
+      {% if form.title is defined %}
+        <div class="sangel-search__widget">
+          {{ form.title }}
+        </div>
+      {% endif %}
+    </div>
+
+    {% if form.actions is defined %}
+      <div class="sangel-search__actions hidden">
+        {{ form.actions }}
+      </div>
+    {% endif %}
+
+    {{ rendered_form }}
+  </div>
+</form>

@@ -1,0 +1,6 @@
+administer sangel orders:
+  title: 'Administer Sangel orders'
+  description: 'Manage order related configurations and view all orders.'
+view all sangel orders:
+  title: 'View all orders'
+  description: 'View any customer order and its details.'

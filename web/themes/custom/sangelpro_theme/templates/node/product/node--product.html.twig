@@ -1,0 +1,125 @@
+{% set image_url = node.field_image_url.value ?? '' %}
+{% set price_raw = node.field_price.value ?? '' %}
+{% set price = price_raw is not empty ? price_raw|number_format(0, ',', ' ') : '' %}
+{% set sku = node.field_sku.value ?? '' %}
+{% set client_type = node.field_client_type.entity ? node.field_client_type.entity.label : '' %}
+{% set family = node.field_family.entity ? node.field_family.entity.label : '' %}
+{% set sub_family = node.field_sub_family.entity ? node.field_sub_family.entity.label : '' %}
+{% set origin = node.field_origin.value ?? '' %}
+{% set weight = node.field_weight.value ?? '' %}
+{% set unit_weight = node.field_unit_weight.value ?? '' %}
+{% set extra = content|without('field_image_url','field_price','field_description','field_client_type','field_family','field_sub_family','field_sku','field_origin','field_weight','field_unit_weight','links') %}
+
+{% set product_id = node.id() %}
+{% set cart_add_url = path('sangel_order.cart_add', {'node': product_id}) %}
+{% set catalog_add_url = path('sangel_product.catalog_add', {'node': product_id}) %}
+{% set already_in_catalog = is_in_catalog(product_id) %}
+{% set addToCatalogText = is_client ? 'Ajouter à mon catalogue'|t : 'Ajouter à ma sélection'|t %}
+{% set quantity_input_id = 'product-quantity-' ~ product_id %}
+
+{{ attach_library('sangelpro_theme/product-actions') }}
+
+<article{{attributes.addClass('product-full')}}>
+	<div class="product-full__media">
+		{% if image_url %}
+			<img src="{{ image_url|escape }}" alt="{{ label|escape }}" loading="lazy"/>
+		{% else %}
+			<div class="product-full__placeholder" aria-hidden="true">{{ 'Image indisponible'|t }}</div>
+		{% endif %}
+	</div>
+
+	<div class="product-full__body">
+		<header class="product-full__header">
+			<div class="product-full__tags">
+				{% if client_type %}
+					<span class="product-full__tag">{{ client_type }}</span>
+				{% endif %}
+				{% if family %}
+					<span class="product-full__tag product-full__tag--muted">{{ family }}</span>
+				{% endif %}
+				{% if sub_family %}
+					<span class="product-full__tag product-full__tag--muted">{{ sub_family }}</span>
+				{% endif %}
+			</div>
+			<h1 class="product-full__title">{{ label }}</h1>
+			{% if price %}
+				<div class="product-full__pricing">
+					<div class="product-full__price">{{ price }}&nbsp;F&nbsp;CFA</div>
+					{# {% if weight %}
+																<span class="product-full__price-note">
+																	{{ 'Poids :'|t }}
+																	{{ weight|number_format(0, ',', ' ') }}{{ unit_weight ? ' ' ~ unit_weight : '' }}
+																</span>
+															{% endif %} #}
+				</div>
+			{% endif %}
+		</header>
+
+		{% if content.field_description %}
+			<div class="product-full__description">{{ content.field_description }}</div>
+		{% endif %}
+
+		<div class="product-full__meta">
+			{% if price %}
+				<div class="product-full__meta-item">
+					<div class="product-full__meta-label">{{ 'Prix'|t }}</div>
+					<div class="product-full__meta-value">{{ price }}&nbsp;F&nbsp;CFA</div>
+				</div>
+			{% endif %}
+			{% if sku %}
+				<div class="product-full__meta-item">
+					<div class="product-full__meta-label">{{ 'Référence'|t }}</div>
+					<div class="product-full__meta-value">{{ sku }}</div>
+				</div>
+			{% endif %}
+			{% if origin %}
+				<div class="product-full__meta-item">
+					<div class="product-full__meta-label">{{ 'Origine'|t }}</div>
+					<div class="product-full__meta-value">{{ origin }}</div>
+				</div>
+			{% endif %}
+			{% if weight or unit_weight %}
+				<div class="product-full__meta-item">
+					<div class="product-full__meta-label">{{ 'Conditionnement'|t }}</div>
+					<div class="product-full__meta-value">
+						{{ weight ? weight|number_format(0, ',', ' ') : '' }}
+						{% if unit_weight %}
+							{{ unit_weight }}
+						{% endif %}
+					</div>
+				</div>
+			{% endif %}
+		</div>
+
+		{% if extra %}
+			<div class="product-full__extras">{{ extra }}</div>
+		{% endif %}
+
+		<div class="product-full__purchase">
+			{% if price %}
+				<div class="product-full__purchase-total" data-product-total>
+					<span class="product-full__purchase-total-label">{{ 'Montant estimé'|t }}</span>
+					<span class="product-full__purchase-total-value" data-product-total-value>{{ price }}&nbsp;F&nbsp;CFA</span>
+				</div>
+			{% endif %}
+
+			{% if not is_commercial %}
+				<div class="product-full__quantity">
+					<label class="product-full__quantity-label" for="{{ quantity_input_id }}">{{ 'Quantité'|t }}</label>
+					<input id="{{ quantity_input_id }}" name="quantity" type="number" min="1" step="1" value="1" inputmode="numeric" pattern="[0-9]*" class="product-full__quantity-input" data-product-quantity data-product-price="{{ price_raw }}"/>
+				</div>
+			{% endif %}
+
+			<div class="product-full__actions">
+				{% if is_client %}
+					<a href="{{ cart_add_url }}" class="product-full__button product-full__button--primary" data-sangel-ajax-url="{{ cart_add_url }}" data-sangel-counter="#sangel-order-cart-count" data-sangel-ajax-quantity="#{{ quantity_input_id }}">
+						{{ 'Ajouter au panier'|t }}
+					</a>
+				{% endif %}
+				<a href="{{ already_in_catalog ? '#' : catalog_add_url }}" class="product-full__button product-full__button--secondary {{ already_in_catalog ? 'product-full__button--disabled' }}" data-sangel-counter="#sangel-product-catalog-count" {% if already_in_catalog %} aria-disabled="true" tabindex="-1" {% else %} data-sangel-ajax-url="{{ catalog_add_url }}" {% endif %}>
+					{{ already_in_catalog ? 'Déjà dans ma sélection'|t : addToCatalogText }}
+				</a>
+			</div>
+		</div>
+	</div>
+</article>

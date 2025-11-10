@@ -1,0 +1,18 @@
+{# WRAPPER VUE — gère l’espacement & la grille par défaut #}
+<div class="sp-view {{ id|clean_class }}">
+  {{ title_prefix }}
+  {% if title %}
+    <h2 class="sp-view__title">{{ title }}</h2>
+  {% endif %}
+  {{ title_suffix }}
+
+  {% if header %}
+    <div class="sp-view__header">{{ header }}</div>
+  {% endif %}
+
+  {{ rows }} {# rendu par views-view-grid ou views-view-unformatted #}
+
+  {% if pager %}
+    <div class="sp-view__pager">{{ pager }}</div>
+  {% endif %}
+</div>

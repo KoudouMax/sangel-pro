@@ -1,0 +1,28 @@
+{#
+  Default page title styling for the SangelPro theme.
+
+  Mirrors the core template API but wraps the heading in a styled container so
+  page titles feel consistent across the application and print views.
+#}
+{% set container_classes = [
+  'sangel-page-title',
+  'relative',
+  'overflow-hidden',
+] %}
+
+{% if title %}
+	<div class="{{ container_classes|join(' ') }}">
+		<div class="relative z-10 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+			<div class="space-y-2">
+				{{ title_prefix }}
+				<h1{{title_attributes.addClass('text-xl','font-extrabold','uppercase','tracking-[0.35em]','text-sangel-primary/70')}}>
+					{{ title }}
+				</h1>
+				{{ title_suffix }}
+			</div>
+		</div>
+	</div>
+{% else %}
+	{{ title_prefix }}
+	{{ title_suffix }}
+{% endif %}

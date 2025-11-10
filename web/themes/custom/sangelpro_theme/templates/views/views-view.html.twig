@@ -1,0 +1,50 @@
+{#
+/**
+ * @file
+ * Theme override for Views output to position feed/export icons above results.
+ */
+#}
+{% set classes = [
+  dom_id ? 'js-view-dom-id-' ~ dom_id,
+] %}
+{% set storage = view.storage ?? null %}
+{% set view_id = storage ? storage.id() : '' %}
+{% set display_id = view.current_display ?? '' %}
+{% set should_show_feed_icons = feed_icons and not (view_id == 'product_catalog' and display_id == 'for_current_user') %}
+<div{{ attributes.addClass(classes) }}>
+  {{ title_prefix }}
+  {{ title }}
+  {{ title_suffix }}
+
+  {% if header %}
+    <header>
+      {{ header }}
+    </header>
+  {% endif %}
+
+  {{ exposed }}
+
+  {% if should_show_feed_icons %}
+    <div class="sangel-feed-icons mb-4 flex flex-wrap items-center justify-end gap-2">
+      {{ feed_icons }}
+    </div>
+  {% endif %}
+
+  {{ attachment_before }}
+
+  {% if rows -%}
+    {{ rows }}
+  {% elseif empty -%}
+    {{ empty }}
+  {% endif %}
+  {{ pager }}
+
+  {{ attachment_after }}
+  {{ more }}
+
+  {% if footer %}
+    <footer>
+      {{ footer }}
+    </footer>
+  {% endif %}
+</div>

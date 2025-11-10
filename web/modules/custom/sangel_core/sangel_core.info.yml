@@ -1,0 +1,7 @@
+name: Sangel Core
+type: module
+description: 'Core module for Sangel pro.'
+package: Sangel
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:taxonomy

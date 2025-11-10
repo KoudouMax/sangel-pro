@@ -1,0 +1,24 @@
+{% set summary = gestion_client_summary ?? {} %}
+{% set owner_id = gestion_client_owner_id ?? null %}
+{% set owner_argument = gestion_client_owner_argument ?? null %}
+
+{% embed '@sangelpro_theme/layout/page--gestion.html.twig'
+  with {
+    show_back_link: true,
+    title: 'Visualisez le panier actuel de @client.'|t({'@client': summary.label})
+  }
+%}
+
+	{% block content %}
+		<div class="space-y-6">
+			<div class="rounded-2xl border border-sangel-ice bg-white p-6 shadow-sm">
+				{% if gestion_client_cart_render is defined %}
+					{{ gestion_client_cart_render }}
+				{% else %}
+					{{ drupal_view('cart', 'user_cart', owner_argument is not null ? owner_argument : '') }}
+				{% endif %}
+			</div>
+		</div>
+	{% endblock %}
+
+{% endembed %}

@@ -1,0 +1,245 @@
+{#
+/**
+ * @file
+ * Theme override to display a client node.
+ */
+#}
+{% set node_title = label is defined ? (label|render ?: node.label()) : node.label() %}
+{% set url = path('entity.node.canonical', {'node': node.id()}) %}
+
+{% set company = node.hasField('field_reason_social') and node.field_reason_social.value is not empty ? node.field_reason_social.value : '' %}
+{% set email = node.hasField('field_mail') and node.field_mail.value is not empty ? node.field_mail.value : '' %}
+{% set phone = node.hasField('field_phonenumber') and node.field_phonenumber.value is not empty ? node.field_phonenumber.value : '' %}
+{% set username = node.hasField('field_username') and node.field_username.value is not empty ? node.field_username.value : '' %}
+
+{% set client_types = [] %}
+{% if node.hasField('field_client_type') and node.field_client_type|length %}
+	{% for item in node.field_client_type %}
+		{% if item.entity %}
+			{% set client_types = client_types|merge([item.entity.label]) %}
+		{% endif %}
+	{% endfor %}
+{% endif %}
+
+{% set owner = node.getOwner() %}
+{% set owner_name = owner ? owner.getDisplayName() : '' %}
+{% set owner_email = owner and owner.getEmail() ? owner.getEmail() : '' %}
+{% set owner_last_login_timestamp = owner and owner.getLastLoginTime ? owner.getLastLoginTime() : 0 %}
+{% set owner_last_login = owner_last_login_timestamp ? owner_last_login_timestamp|format_date('short') : '' %}
+
+{% set created = node.getCreatedTime() ? node.getCreatedTime()|format_date('short') : '' %}
+{% set updated = node.getChangedTime() ? node.getChangedTime()|format_date('short') : '' %}
+
+{% set status_is_active = node.isPublished() %}
+{% set status_label = status_is_active ? 'Actif'|t : 'Inactif'|t %}
+{% set status_badge_classes = status_is_active
+  ? 'border-sangel-primary/20 bg-sangel-primary/10 text-sangel-primary'
+  : 'border-sangel-ice/70 bg-sangel-ice/50 text-sangel-text/60'
+%}
+
+{% set quick_links = [
+  {
+    'label': 'Catalogue'|t,
+    'description': 'Consulter et personnaliser le catalogue du client.'|t,
+    'url': path('sangel_core.manage_clients_catalogs_page', {'node': node.id()}),
+  },
+  {
+    'label': 'Panier'|t,
+    'description': 'Suivre les sélections en cours.'|t,
+    'url': path('sangel_core.manage_clients_cart_page', {'node': node.id()}),
+  },
+  {
+    'label': 'Commandes'|t,
+    'description': 'Historique des commandes passées.'|t,
+    'url': path('sangel_core.manage_clients_orders', {'node': node.id()}),
+  },
+  {
+    'label': 'Importer des produits'|t,
+    'description': 'Importer des produits personnalisés pour ce client.'|t,
+    'url': path('sangel_core.manage_clients_profile_page', {'node': node.id()}),
+  },
+    {
+    'label': 'Modifier la fiche'|t,
+    'description': 'Mettre à jour les informations du client.'|t,
+    'url': path('sangel_core.manage_clients_edit', {'node': node.id()}),
+  },
+] %}
+
+{% set renderable_content = content|without(
+  'field_reason_social',
+  'field_client_type',
+  'field_mail',
+  'field_phonenumber',
+  'field_username',
+  'field_password',
+  'links'
+) %}
+
+{% set classes = ['node', 'node--type-' ~ node.bundle|clean_class, 'node--client'] %}
+{% if view_mode %}
+	{% set classes = classes|merge(['node--view-mode-' ~ view_mode|clean_class]) %}
+{% endif %}
+{% if not status_is_active %}
+	{% set classes = classes|merge(['is-unpublished']) %}
+{% endif %}
+
+<article{{attributes.addClass(classes)}}>
+	<header class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-white to-sangel-ice/40 p-8 shadow-[0_25px_55px_-35px_rgba(15,23,42,0.55)]">
+		<div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+			<div class="space-y-4">
+				<span class="inline-flex items-center gap-2 rounded-full border border-sangel-ice/60 bg-white/70 px-3 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.32em] text-sangel-text/50">
+					<span aria-hidden="true">◆</span>
+					{{ 'Client'|t }}
+				</span>
+
+				{{ title_prefix }}
+				{% if page %}
+					<h1 class="text-3xl font-semibold text-sangel-text md:text-4xl">
+						{{ node_title }}
+					</h1>
+				{% else %}
+					<h2 class="text-2xl font-semibold text-sangel-text md:text-3xl">
+						<a href="{{ url }}" class="text-inherit hover:text-sangel-primary">{{ node_title }}</a>
+					</h2>
+				{% endif %}
+				{{ title_suffix }}
+
+				<div class="flex flex-wrap items-center gap-3 text-sm text-sangel-text/70">
+					{% if company %}
+						<span class="inline-flex items-center gap-2 rounded-full border border-sangel-ice/70 bg-white/70 px-3 py-1 text-xs font-semibold text-sangel-text/80">
+							<span aria-hidden="true">🏢</span>
+							{{ company }}
+						</span>
+					{% endif %}
+					{% if client_types %}
+						<div class="flex flex-wrap gap-2">
+							{% for type_label in client_types %}
+								<span class="inline-flex items-center gap-2 rounded-full border border-sangel-primary/20 bg-sangel-primary/10 px-3 py-1 text-xs font-semibold text-sangel-primary">
+									{{ type_label }}
+								</span>
+							{% endfor %}
+						</div>
+					{% endif %}
+				</div>
+			</div>
+
+			<div class="flex flex-col items-start gap-4 lg:items-end">
+				<span class="inline-flex items-center gap-2 self-start rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] {{ status_badge_classes }}">
+					<span class="h-2 w-2 rounded-full {{ status_is_active ? 'bg-sangel-primary' : 'bg-sangel-text/50' }}"></span>
+					{{ status_label }}
+				</span>
+
+				<dl class="grid gap-3 text-right text-sm text-sangel-text/60">
+					{% if created %}
+						<div class="flex items-center justify-between gap-6">
+							<dt class="uppercase tracking-[0.28em]">{{ 'Créé le'|t }}</dt>
+							<dd class="font-semibold text-sangel-text">{{ created }}</dd>
+						</div>
+					{% endif %}
+					{% if updated and updated != created %}
+						<div class="flex items-center justify-between gap-6">
+							<dt class="uppercase tracking-[0.28em]">{{ 'Mis à jour'|t }}</dt>
+							<dd class="font-semibold text-sangel-text">{{ updated }}</dd>
+						</div>
+					{% endif %}
+					{% if owner_last_login %}
+						<div class="flex items-center justify-between gap-6">
+							<dt class="uppercase tracking-[0.28em]">{{ 'Dernière connexion'|t }}</dt>
+							<dd class="font-semibold text-sangel-text">{{ owner_last_login }}</dd>
+						</div>
+					{% endif %}
+				</dl>
+			</div>
+		</div>
+	</header>
+
+	<div class="mt-8 grid gap-6 lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]">
+		<section class="space-y-6">
+			<div class="rounded-3xl bg-white p-6 shadow-[0_20px_45px_-30px_rgba(15,23,42,0.45)]">
+				<h2 class="text-lg font-semibold text-sangel-text">{{ 'Coordonnées'|t }}</h2>
+				<div class="mt-4 grid gap-4 sm:grid-cols-2">
+					{% if email %}
+						<div class="rounded-2xl border border-sangel-ice/80 bg-sangel-ice/20 p-4">
+							<span class="text-xs font-semibold uppercase tracking-[0.24em] text-sangel-text/50">{{ 'Email'|t }}</span>
+							<a href="mailto:{{ email }}" class="mt-2 block text-sm font-semibold text-sangel-primary hover:underline">{{ email }}</a>
+						</div>
+					{% endif %}
+					{% if phone %}
+						<div class="rounded-2xl border border-sangel-ice/80 bg-sangel-ice/20 p-4">
+							<span class="text-xs font-semibold uppercase tracking-[0.24em] text-sangel-text/50">{{ 'Téléphone'|t }}</span>
+							<span class="mt-2 block text-sm font-semibold text-sangel-text">{{ phone }}</span>
+						</div>
+					{% endif %}
+					{% if username %}
+						<div class="rounded-2xl border border-sangel-ice/80 bg-sangel-ice/20 p-4">
+							<span class="text-xs font-semibold uppercase tracking-[0.24em] text-sangel-text/50">{{ 'Identifiant'|t }}</span>
+							<span class="mt-2 block text-sm font-semibold text-sangel-text">{{ username }}</span>
+						</div>
+					{% endif %}
+					{% if company %}
+						<div class="rounded-2xl border border-sangel-ice/80 bg-sangel-ice/20 p-4">
+							<span class="text-xs font-semibold uppercase tracking-[0.24em] text-sangel-text/50">{{ 'Société'|t }}</span>
+							<span class="mt-2 block text-sm font-semibold text-sangel-text">{{ company }}</span>
+						</div>
+					{% endif %}
+				</div>
+			</div>
+
+			{% if owner_name or owner_email %}
+				<div class="rounded-3xl bg-white p-6 shadow-[0_20px_45px_-30px_rgba(15,23,42,0.45)]">
+					<h2 class="text-lg font-semibold text-sangel-text">{{ 'Conseiller référent'|t }}</h2>
+					<div class="mt-4 flex flex-col gap-3">
+						{% if owner_name %}
+							<p class="text-base font-semibold text-sangel-text">{{ owner_name }}</p>
+						{% endif %}
+						{% if owner_email %}
+							<a href="mailto:{{ owner_email }}" class="inline-flex w-max items-center gap-2 rounded-full border border-sangel-primary/30 bg-sangel-primary/5 px-3 py-1 text-xs font-semibold text-sangel-primary hover:bg-sangel-primary/10">
+								<span aria-hidden="true">✉</span>
+								{{ owner_email }}
+							</a>
+						{% endif %}
+					</div>
+				</div>
+			{% endif %}
+
+			{% if renderable_content is not empty %}
+				{% set rendered = renderable_content|render %}
+				{% if rendered|trim %}
+					<div class="rounded-3xl bg-white p-6 shadow-[0_18px_35px_-28px_rgba(15,23,42,0.4)]">
+						<h2 class="text-lg font-semibold text-sangel-text">{{ 'Informations complémentaires'|t }}</h2>
+						<div class="mt-4 space-y-4">
+							{{ rendered }}
+						</div>
+					</div>
+				{% endif %}
+			{% endif %}
+		</section>
+
+		{% if quick_links %}
+			<aside class="space-y-4">
+				<div class="rounded-3xl bg-white p-6 shadow-[0_20px_45px_-30px_rgba(15,23,42,0.45)]">
+					<h2 class="text-base font-semibold text-sangel-text">{{ 'Actions rapides'|t }}</h2>
+					<ul class="mt-4 space-y-3 text-sm">
+						{% for link in quick_links %}
+							<li>
+								<a href="{{ link.url }}" class="flex items-start justify-between gap-4 rounded-2xl border border-sangel-ice px-4 py-3 text-left text-sangel-text transition hover:border-sangel-primary hover:text-sangel-primary focus:outline-none focus:ring-2 focus:ring-sangel-primary/20">
+									<span>
+										<span class="block font-semibold">{{ link.label }}</span>
+										<span class="mt-1 block text-xs text-sangel-text/60">{{ link.description }}</span>
+									</span>
+									<span aria-hidden="true" class="text-lg text-sangel-primary">↗</span>
+								</a>
+							</li>
+						{% endfor %}
+					</ul>
+				</div>
+			</aside>
+		{% endif %}
+	</div>
+
+	{% if content.links %}
+		<div class="mt-8">
+			{{ content.links }}
+		</div>
+	{% endif %}
+</article>

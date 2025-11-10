@@ -1,0 +1,13 @@
+{#
+ # Renders the list of cart items.
+ #}
+{% set wrapper_classes = ['sangel-order-cart-items-wrapper'] %}
+<div{{ attributes.addClass(wrapper_classes) }}>
+  {% if items %}
+    {% for item in items %}
+      {{ item }}
+    {% endfor %}
+  {% elseif empty_message %}
+    <div class="sangel-order-cart-empty">{{ empty_message }}</div>
+  {% endif %}
+</div>

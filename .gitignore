@@ -1,0 +1,13 @@
+.ddev
+.idea
+.vscode
+*.log
+*.tmp
+
+# Directories
+vendor/
+
+# Config files
+.env
+.env.local
+.env.*.local

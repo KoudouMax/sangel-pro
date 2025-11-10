@@ -1,0 +1,12 @@
+name: "Sangel Order"
+type: module
+description: "Provides order content type and cart functionality."
+core_version_requirement: ^10 || ^11
+package: Sangel
+dependencies:
+  - drupal:node
+  - drupal:user
+  - drupal:options
+  - drupal:text
+  - sangel_core
+  - sangel_product

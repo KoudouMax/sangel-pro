@@ -1,0 +1,24 @@
+services:
+  logger.channel.sangel_product:
+    parent: logger.channel_base
+    arguments: ['sangel_product']
+
+  sangel_product.catalog_selection_manager:
+    class: Drupal\sangel_product\Service\CatalogSelectionManager
+    arguments:
+      - '@entity_type.manager'
+      - '@entity_field.manager'
+      - '@current_user'
+      - '@logger.channel.sangel_product'
+      - '@string_translation'
+      - '@sangel_core.catalog_product_repository'
+
+  sangel_product.twig.catalog_extension:
+    class: Drupal\sangel_product\Twig\CatalogExtension
+    arguments:
+      - '@sangel_product.catalog_selection_manager'
+      - '@entity_type.manager'
+      - '@current_user'
+      - '@sangel_core.catalog_product_repository'
+    tags:
+      - { name: twig.extension }

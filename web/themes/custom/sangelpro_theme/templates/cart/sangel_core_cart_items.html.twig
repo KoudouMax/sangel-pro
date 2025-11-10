@@ -1,0 +1,208 @@
+{% set cart_empty_text = cart_empty_text ?? 'Panier vide'|t %}
+{% set cart_read_only = read_only ?? is_commercial %}
+{% set cart_actions_allowed = cart_actions_allowed ?? true %}
+{% set cart_owner_name = cart_owner_name ?? '' %}
+{% set has_items = cart_items is not empty %}
+
+{% set cart_quantities_editable = cart_quantities_editable ?? cart_actions_allowed %}
+{% if cart_quantities_editable %}
+	{{ attach_library('sangelpro_theme/cart-actions') }}
+{% endif %}
+
+<section class="space-y-8" data-sangel-cart-items-wrapper>
+	<header class="rounded-3xl border border-sangel-ice-strong bg-white/95 p-6 shadow-sm">
+		<div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+			<div class="space-y-3">
+				<div class="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.22em] text-sangel-text/50">
+					<span>{{ 'Panier actif'|t }}</span>
+					{% if cart_read_only and cart_owner_name %}
+						<span class="inline-flex items-center gap-2 rounded-full bg-sangel-ice px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-sangel-text/70">
+							{{ cart_owner_name }}
+						</span>
+					{% endif %}
+				</div>
+				<h1 class="text-2xl font-semibold text-sangel-text sm:text-3xl">
+					{{ cart_read_only and cart_owner_name ? 'Panier de @client'|t({'@client': cart_owner_name}) : 'Mon panier'|t }}
+				</h1>
+				<div class="flex flex-wrap items-center gap-4 text-sm text-sangel-text/60">
+					<span class="inline-flex items-center gap-2 rounded-full border border-sangel-ice-strong px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sangel-text/60">
+						{{ 'Articles'|t }}
+						:
+						<span class="text-sangel-text">{{ cart_item_count }}</span>
+					</span>
+					<span class="inline-flex items-center gap-2 rounded-full border border-sangel-primary/20 bg-sangel-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sangel-primary">
+						{{ 'Total'|t }}
+						:
+						<span class="text-sangel-primary">{{ cart_total }}&nbsp;F&nbsp;CFA</span>
+					</span>
+				</div>
+			</div>
+			<div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+				{% if cart_continue_url %}
+					<a href="{{ cart_continue_url }}" class="inline-flex items-center justify-center gap-2 rounded-full border border-sangel-primary px-5 py-2 text-sm font-semibold text-sangel-primary transition hover:bg-sangel-primary/10">
+						<span>{{ 'Continuer mes achats'|t }}</span>
+					</a>
+				{% endif %}
+				{% if cart_read_only %}
+					<span class="inline-flex items-center justify-center rounded-full bg-sangel-ice px-5 py-2 text-sm font-semibold text-sangel-text/60">{{ 'Consultation uniquement'|t }}</span>
+				{% else %}
+					{% if cart_can_checkout %}
+						<a href="{{ cart_checkout_url }}" class="inline-flex items-center justify-center gap-2 rounded-full bg-sangel-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sangel-primary/90">
+							<span>{{ 'Valider ma commande'|t }}</span>
+							<svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+								<path fill-rule="evenodd" d="M3 10a.75.75 0 0 1 .75-.75h10.69l-3.22-3.22a.75.75 0 0 1 1.06-1.06l4.5 4.5a.75.75 0 0 1 0 1.06l-4.5 4.5a.75.75 0 1 1-1.06-1.06l3.22-3.22H3.75A.75.75 0 0 1 3 10Z" clip-rule="evenodd"/>
+							</svg>
+						</a>
+					{% elseif not cart_is_empty %}
+						<a href="{{ cart_checkout_url }}" class="inline-flex items-center justify-center gap-2 rounded-full border border-sangel-primary px-5 py-2 text-sm font-semibold text-sangel-primary transition hover:bg-sangel-primary/10">
+							{{ 'Me connecter pour finaliser'|t }}
+						</a>
+					{% else %}
+						<span class="inline-flex cursor-not-allowed items-center justify-center rounded-full bg-sangel-ice px-5 py-2 text-sm font-semibold text-sangel-text/50">{{ 'Valider ma commande'|t }}</span>
+					{% endif %}
+				{% endif %}
+			</div>
+		</div>
+	</header>
+
+	{% if has_items %}
+		<div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+			<div class="space-y-5">
+				<div class="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.18em] text-sangel-text/40">
+					<span>{{ 'Liste des articles'|t }}</span>
+					{% if cart_quantities_editable %}
+						<span>{{ 'Mise à jour automatique lors des modifications'|t }}</span>
+					{% endif %}
+				</div>
+				<ul class="space-y-4" data-sangel-cart-items>
+					{% for item in cart_items %}
+						<li id="{{ item.id }}" class="group relative overflow-hidden rounded-3xl border border-sangel-ice-strong bg-white/95 p-5 shadow-sm transition hover:-translate-y-[1px] hover:border-sangel-primary/40 hover:shadow-lg">
+							<div class="flex flex-col gap-4 lg:flex-row lg:items-center">
+								<div class="relative flex h-32 w-full items-center justify-center overflow-hidden rounded-2xl bg-sangel-ice lg:h-32 lg:w-32">
+									{% if item.image_url %}
+										<img src="{{ item.image_url }}" alt="{{ item.title }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy">
+									{% else %}
+										<span class="text-xs font-semibold uppercase tracking-[0.22em] text-sangel-text/40">{{ 'Aperçu'|t }}</span>
+									{% endif %}
+								</div>
+								<div class="flex flex-1 flex-col gap-4">
+									<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+										<div class="space-y-2">
+											<h3 class="text-lg font-semibold text-sangel-text">
+												{% if item.product_url %}
+													<a href="{{ item.product_url }}" class="hover:text-sangel-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sangel-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white">
+														{{ item.title }}
+													</a>
+												{% else %}
+													{{ item.title }}
+												{% endif %}
+											</h3>
+											{% if item.sku %}
+												<span class="inline-flex items-center rounded-full bg-sangel-ice px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-sangel-text/60">
+													{{ 'Réf. : @sku'|t({'@sku': item.sku}) }}
+												</span>
+											{% endif %}
+										</div>
+										<div class="text-right">
+											<span class="block text-xs uppercase tracking-[0.18em] text-sangel-text/50">{{ 'Total'|t }}</span>
+											<span class="text-xl font-semibold text-sangel-primary">{{ item.line_total }}&nbsp;F&nbsp;CFA</span>
+										</div>
+									</div>
+									<div class="grid gap-3 text-sm text-sangel-text/70 sm:grid-cols-3">
+										<div class="rounded-2xl border border-sangel-ice-strong bg-sangel-ice/40 px-4 py-3">
+											<span class="block text-xs uppercase tracking-[0.18em] text-sangel-text/50">{{ 'Quantité'|t }}</span>
+											{% if cart_quantities_editable and item.update_url %}
+												<div class="mt-2 flex items-center gap-2" data-sangel-cart-quantity-wrapper>
+													<button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-sangel-ice-strong bg-white text-sangel-text transition hover:border-sangel-primary/40 hover:text-sangel-primary" data-cart-quantity-decrease aria-label="{{ 'Diminuer la quantité pour @product'|t({'@product': item.title}) }}">−</button>
+													<input type="number" min="0" step="1" value="{{ item.quantity }}" class="w-16 rounded-full border border-sangel-ice-strong bg-white py-1 text-center text-base font-semibold text-sangel-text focus:border-sangel-primary focus:outline-none focus:ring-2 focus:ring-sangel-primary/40" data-sangel-cart-quantity data-sangel-cart-update-url="{{ item.update_url }}" aria-label="{{ 'Quantité pour @product'|t({'@product': item.title}) }}">
+													<button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-sangel-ice-strong bg-white text-sangel-text transition hover:border-sangel-primary/40 hover:text-sangel-primary" data-cart-quantity-increase aria-label="{{ 'Augmenter la quantité pour @product'|t({'@product': item.title}) }}">+</button>
+												</div>
+											{% else %}
+												<span class="mt-1 block text-base font-semibold text-sangel-text">{{ item.quantity }}</span>
+											{% endif %}
+										</div>
+										<div class="rounded-2xl border border-sangel-ice-strong bg-sangel-ice/40 px-4 py-3">
+											<span class="block text-xs uppercase tracking-[0.18em] text-sangel-text/50">{{ 'Prix unitaire'|t }}</span>
+											<span class="mt-1 block text-base font-semibold text-sangel-text">{{ item.unit_price }}&nbsp;F&nbsp;CFA</span>
+										</div>
+										<div class="rounded-2xl border border-sangel-ice-strong bg-sangel-ice/40 px-4 py-3">
+											<span class="block text-xs uppercase tracking-[0.18em] text-sangel-text/50">{{ 'Sous-total'|t }}</span>
+											<span class="mt-1 block text-base font-semibold text-sangel-text">{{ item.line_total }}&nbsp;F&nbsp;CFA</span>
+										</div>
+									</div>
+									{% if cart_actions_allowed %}
+										<div class="flex items-center justify-end">
+											<a href="{{ item.remove_url }}" class="use-ajax inline-flex items-center gap-2 rounded-full border border-red-200 px-4 py-2 text-sm font-semibold text-red-500 transition hover:border-red-400 hover:text-red-600" data-remove-target="#{{ item.id }}">
+												<span aria-hidden="true">✕</span>
+												<span>{{ 'Retirer du panier'|t }}</span>
+											</a>
+										</div>
+									{% endif %}
+								</div>
+							</div>
+						</li>
+					{% endfor %}
+				</ul>
+			</div>
+
+			<aside class="space-y-4">
+				<div class="rounded-3xl border border-sangel-ice-strong bg-white/95 p-6 shadow-sm">
+					<h2 class="text-lg font-semibold text-sangel-text">{{ 'Récapitulatif'|t }}</h2>
+					<dl class="mt-4 space-y-3 text-sm">
+						<div class="flex items-center justify-between">
+							<dt class="text-sangel-text/70">{{ 'Articles'|t }}</dt>
+							<dd class="font-semibold text-sangel-text" data-cart-summary-count>{{ cart_item_count }}</dd>
+						</div>
+						<div class="flex items-center justify-between">
+							<dt class="text-sangel-text/70">{{ 'Total HT'|t }}</dt>
+							<dd class="text-2xl font-semibold text-sangel-primary" data-cart-summary-total>{{ cart_total }}&nbsp;F&nbsp;CFA</dd>
+						</div>
+					</dl>
+					<div class="mt-6 space-y-3" data-cart-summary-checkout>
+						{% if cart_read_only %}
+							<span class="inline-flex w-full items-center justify-center rounded-full bg-sangel-ice px-5 py-2 text-sm font-semibold text-sangel-text/60">{{ 'Consultation uniquement'|t }}</span>
+						{% else %}
+							{% if cart_can_checkout %}
+								<a href="{{ cart_checkout_url }}" class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-sangel-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sangel-primary/90">
+									{{ 'Valider ma commande'|t }}
+								</a>
+							{% elseif not cart_is_empty %}
+								<a href="{{ cart_checkout_url }}" class="inline-flex w-full items-center justify-center gap-2 rounded-full border border-sangel-primary px-5 py-2 text-sm font-semibold text-sangel-primary transition hover:bg-sangel-primary/10">
+									{{ 'Me connecter pour finaliser'|t }}
+								</a>
+							{% else %}
+								<span class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-full bg-sangel-ice px-5 py-2 text-sm font-semibold text-sangel-text/50">{{ 'Valider ma commande'|t }}</span>
+							{% endif %}
+						{% endif %}
+					</div>
+				</div>
+				<div class="rounded-3xl border border-sangel-ice bg-white/95 p-6 text-sm text-sangel-text/70 shadow-sm">
+					<h3 class="text-xs font-semibold uppercase tracking-[0.22em] text-sangel-text/60">{{ 'Informations'|t }}</h3>
+					<ul class="mt-3 space-y-2 list-disc list-inside">
+						<li>{{ 'Les prix indiqués sont hors taxe'|t }}</li>
+					</ul>
+				</div>
+			</aside>
+		</div>
+	{% else %}
+		<div class="rounded-3xl border border-dashed border-sangel-ice bg-white/60 p-12 text-center shadow-sm">
+			<h2 class="text-xl font-semibold text-sangel-text/80">{{ cart_empty_text }}</h2>
+			<p class="mt-2 text-sm text-sangel-text/60">
+				{% if cart_read_only and cart_owner_name %}
+					{{ 'Le panier de @client est actuellement vide.'|t({'@client': cart_owner_name}) }}
+				{% elseif cart_read_only %}
+					{{ 'Ce panier ne contient aucun article pour le moment.'|t }}
+				{% else %}
+					{{ 'Parcourez nos catalogues pour ajouter vos premiers produits.'|t }}
+				{% endif %}
+			</p>
+			{% if not cart_read_only and cart_empty_cta_url %}
+				<div class="mt-6 inline-flex">
+					<a href="{{ cart_empty_cta_url }}" class="inline-flex items-center justify-center gap-2 rounded-full bg-sangel-primary px-6 py-3 text-sm font-semibold text-white shadow hover:bg-sangel-primary/90">
+						{{ 'Découvrir les catalogues'|t }}
+					</a>
+				</div>
+			{% endif %}
+		</div>
+	{% endif %}
+</section>

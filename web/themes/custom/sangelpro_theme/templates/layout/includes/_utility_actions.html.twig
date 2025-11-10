@@ -1,0 +1,37 @@
+{#
+/**
+ * @file
+ * Theme override to display utility actions.
+ * Available variables:
+ * - page.utility_actions: Rendered utility actions.
+ * - user_roles: Array of user roles.
+ * - is_authenticated: Boolean indicating if the user is authenticated.
+ * - logged_in: Boolean indicating if the user is logged in.
+ * - is_client: Boolean indicating if the user has the 'client' role.
+ * - is_commercial: Boolean indicating if the user has the 'commercial' role.
+ * - order_history_url: URL to the user's order history page.
+ * - drupal_block(block_id): Function to render a Drupal block by its ID.
+ * - path(route_name): Function to generate a URL for a given route.
+ * - create_attribute(attributes): Function to create HTML attributes.
+ * - include(template, variables): Function to include another Twig template with variables.
+ * - t(string): Function to translate a string.
+ */ #}
+
+{% if page.utility_actions %}
+  <div class="flex items-center justify-end gap-6 text-sm text-sangel-text/80">
+    {{ page.utility_actions }}
+  </div>
+{% else %}
+
+  <div class="flex flex-row items-center justify-end gap-6 text-sm text-sangel-text/80">
+    {% if is_authenticated %}
+      {% if is_client %}
+        {{ include('@sangelpro_theme/layout/includes/__client_actions.html.twig') }}
+      {% elseif is_commercial %}
+        {{ include('@sangelpro_theme/layout/includes/__customer_actions.html.twig') }}
+      {% endif %}
+    {% else %}
+      {{ include('@sangelpro_theme/layout/includes/__client_actions.html.twig') }}
+    {% endif %}
+  </div>
+{% endif %}

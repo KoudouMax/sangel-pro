@@ -1,0 +1,99 @@
+{#
+  Tableau stylisé pour l'affichage Views (format table).
+  Basé sur le template core mais adapté au design SangelPro.
+#}
+{% set table_classes = [
+  'sangel-table',
+  'sangel-table--views',
+  'cols-' ~ header|length
+] %}
+{% if responsive %}
+  {% set table_classes = table_classes|merge(['responsive-enabled']) %}
+{% endif %}
+{% if sticky %}
+  {% set table_classes = table_classes|merge(['sticky-enabled', 'sticky-header']) %}
+{% endif %}
+
+<div class="sangel-table__wrapper overflow-x-auto">
+  <table{{ attributes.addClass(table_classes) }}>
+    {% if caption_needed %}
+      <caption class="sangel-table__caption">
+        {% if caption %}
+          {{ caption }}
+        {% else %}
+          {{ title }}
+        {% endif %}
+        {% if summary_element is not empty %}
+          <span class="sr-only">{{ 'Résumé du tableau'|t }}</span>
+          {{ summary_element }}
+        {% endif %}
+      </caption>
+    {% endif %}
+
+    {% if header %}
+      <thead class="sangel-table__head">
+        <tr>
+          {% for key, column in header %}
+            {% set column_classes = [] %}
+            {% if column.default_classes %}
+              {% set column_classes = column_classes|merge([
+                'views-field',
+                'views-field-' ~ fields[key]
+              ]) %}
+            {% endif %}
+            <th{{ column.attributes.addClass(column_classes).setAttribute('scope', 'col').addClass('sangel-table__header-cell') }}>
+              {% set label_output %}
+                {% if column.url %}
+                  <a href="{{ column.url }}" title="{{ column.title }}" rel="nofollow" class="inline-flex items-center gap-1">
+                    <span>{{ column.content }}</span>
+                    <span class="text-xs">{{ column.sort_indicator }}</span>
+                  </a>
+                {% else %}
+                  <span class="inline-flex items-center gap-1">
+                    <span>{{ column.content }}</span>
+                    <span class="text-xs">{{ column.sort_indicator }}</span>
+                  </span>
+                {% endif %}
+              {% endset %}
+
+              {% if column.wrapper_element %}
+                <{{ column.wrapper_element }}>{{ label_output }}</{{ column.wrapper_element }}>
+              {% else %}
+                {{ label_output }}
+              {% endif %}
+            </th>
+          {% endfor %}
+        </tr>
+      </thead>
+    {% endif %}
+
+    <tbody class="sangel-table__body">
+      {% for row in rows %}
+        <tr{{ row.attributes.addClass('sangel-table__row') }}>
+          {% for column in row.columns %}
+            {% set column_classes = [] %}
+            {% if column.default_classes %}
+              {% set column_classes = column_classes|merge(['views-field']) %}
+              {% for field in column.fields %}
+                {% set column_classes = column_classes|merge(['views-field-' ~ field]) %}
+              {% endfor %}
+            {% endif %}
+            <td{{ column.attributes.addClass(column_classes).addClass('sangel-table__cell') }}>
+              {% if column.wrapper_element %}
+                <{{ column.wrapper_element }}>
+                  {% for content in column.content %}
+                    {{ content.separator }}{{ content.field_output }}
+                  {% endfor %}
+                </{{ column.wrapper_element }}>
+              {% else %}
+                {% for content in column.content %}
+                  {{ content.separator }}{{ content.field_output }}
+                {% endfor %}
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

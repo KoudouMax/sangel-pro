@@ -1,0 +1,64 @@
+sangel_order.cart_add:
+  path: '/cart/add/{node}'
+  defaults:
+    _controller: '\Drupal\sangel_order\Controller\CartAjaxController::add'
+  requirements:
+    _entity_access: 'node.view'
+  options:
+    parameters:
+      node:
+        type: entity:node
+    _format: 'drupal_ajax'
+
+sangel_order.cart_remove:
+  path: '/cart/remove/{node}'
+  defaults:
+    _controller: '\Drupal\sangel_order\Controller\CartAjaxController::remove'
+  requirements:
+    _entity_access: 'node.view'
+  options:
+    parameters:
+      node:
+        type: entity:node
+    _format: 'drupal_ajax'
+
+sangel_order.cart_update:
+  path: '/cart/update/{node}'
+  defaults:
+    _controller: '\Drupal\sangel_order\Controller\CartAjaxController::update'
+  requirements:
+    _entity_access: 'node.view'
+  options:
+    parameters:
+      node:
+        type: entity:node
+    _format: 'drupal_ajax'
+
+sangel_order.cart:
+  path: "/sangel-order/cart"
+  defaults:
+    _controller: '\Drupal\sangel_order\Controller\CartController::view'
+    _title: "My cart"
+  requirements:
+    _permission: "access content"
+
+sangel_order.checkout:
+  path: "/sangel-order/cart/checkout"
+  defaults:
+    _form: '\Drupal\sangel_order\Form\CheckoutForm'
+    _title: "Checkout"
+  requirements:
+    _permission: "access content"
+    _user_is_logged_in: "TRUE"
+
+sangel_order.user_orders:
+  path: "/user/{user}/orders"
+  defaults:
+    _controller: '\Drupal\sangel_order\Controller\OrderHistoryController::userOrders'
+    _title: "Mes commandes"
+  requirements:
+    _custom_access: '\Drupal\sangel_order\Controller\OrderHistoryController::accessUserOrders'
+  options:
+    parameters:
+      user:
+        type: entity:user

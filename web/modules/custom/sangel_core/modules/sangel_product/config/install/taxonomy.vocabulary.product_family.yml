@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies: {  }
+name: 'Product family'
+vid: product_family
+description: 'Families used to classify products.'
+hierarchy: 0
+weight: 0
+translatable: false
+default_langcode: true

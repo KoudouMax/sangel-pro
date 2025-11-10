@@ -1,0 +1,126 @@
+<?php
+
+/**
+ * @file
+ * This file is run before the request, when the module first loads.
+ */
+
+use Composer\Autoload\ClassLoader;
+use Drupal\Component\Plugin\PluginManagerInterface;
+use Drupal\Core\Config\ConfigBase;
+use Drupal\Core\Config\ConfigFactory;
+use Drupal\Core\Database\Connection;
+use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\Core\Entity\Plugin\DataType\EntityAdapter;
+use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Field\FieldItemInterface;
+use Drupal\Core\Field\FieldItemListInterface;
+use Drupal\Core\TypedData\TypedDataManager;
+use Drupal\kint\DrupalFieldableEntityPlugin;
+use Kint\Kint;
+use Kint\Parser\BlacklistPlugin;
+use Kint\Parser\IteratorPlugin;
+use Kint\Renderer\RichRenderer;
+use Kint\Renderer\TextRenderer;
+use Kint\Utils;
+
+// Blacklisted for general dump performance.
+BlacklistPlugin::$shallow_blacklist[] = ModuleHandlerInterface::class;
+BlacklistPlugin::$shallow_blacklist[] = Connection::class;
+BlacklistPlugin::$shallow_blacklist[] = ConfigFactory::class;
+BlacklistPlugin::$shallow_blacklist[] = PluginManagerInterface::class;
+
+// Blacklisted for entity dump performance.
+BlacklistPlugin::$shallow_blacklist[] = EntityAdapter::class;
+BlacklistPlugin::$shallow_blacklist[] = TypedDataManager::class;
+IteratorPlugin::$blacklist[] = FieldableEntityInterface::class;
+IteratorPlugin::$blacklist[] = FieldItemListInterface::class;
+IteratorPlugin::$blacklist[] = FieldItemInterface::class;
+
+// Entity handling plugin.
+Kint::$plugins[] = new DrupalFieldableEntityPlugin();
+TextRenderer::$parser_plugin_whitelist[] = DrupalFieldableEntityPlugin::class;
+
+// Timestamps.
+RichRenderer::$timestamp = '[Y-m-d H:i:s]';
+TextRenderer::$timestamp = '[Y-m-d H:i:s]';
+
+// Paths.
+Utils::$path_aliases = [DRUPAL_ROOT => '<drupal>'];
+foreach (ClassLoader::getRegisteredLoaders() as $vendorDir => $loader) {
+  if ($vendorDir && $loader->findFile(\Drupal::class)) {
+    Utils::$path_aliases[$vendorDir] = '<vendor>';
+    break;
+  }
+}
+
+// Ideally we want to set these settings every time, but occasionally
+// the container won't be initialized at this point (Mostly when running
+// updb) If the container doesn't exist we'll fall back to an early
+// constructed service instead.
+if (\Drupal::hasContainer() && \Drupal::hasService('config.factory')) {
+  \kint_initialize_kint_settings(\Drupal::config('kint.settings'));
+}
+
+// We've disabled helpers in composer in order to make them configurable later.
+// For now, load the default ones manually.
+require_once KINT_DIR . '/init_helpers.php';
+
+if (!function_exists('kint')) {
+
+  /**
+   * Kint alias function.
+   *
+   * An old helper from devel. I'm not including kpr since its parameters change
+   * behavior in other ways. If you want to return the output with native kint
+   * you just have to call @d() instead of d()
+   */
+  // phpcs:ignore Drupal.NamingConventions.ValidFunctionName.InvalidPrefix
+  function kint(mixed ...$args): int|string {
+    return Kint::dump(...$args);
+  }
+
+  Kint::$aliases[] = 'kint';
+
+}
+
+/**
+ * {@inheritdoc}
+ */
+function kint_help(string $route_name): string {
+  if ($route_name === 'help.page.kint') {
+    $out = '<pre>' . file_get_contents(__DIR__ . '/README.md') . '</pre>';
+
+    $out .= <<<EOF
+    <p>
+      See the <a href="https://kint-php.github.io/kint/" target="_blank">Kint documentation</a> for Kint usage.
+    </p>
+    EOF;
+
+    return $out;
+  }
+
+  return '';
+}
+
+/**
+ * Sets kint settings based on drupal/kint configuration.
+ */
+function kint_initialize_kint_settings(ConfigBase $config): void {
+  if (NULL !== $config->get('early_enable')) {
+    assert(is_bool($config->get('early_enable')));
+    Kint::$enabled_mode = $config->get('early_enable');
+  }
+
+  if (NULL !== $config->get('rich_theme')) {
+    assert(is_string($config->get('rich_theme')));
+    RichRenderer::$theme = $config->get('rich_theme');
+  }
+
+  if (NULL !== $config->get('date_format')) {
+    $date_format = $config->get('date_format');
+    assert(is_string($date_format));
+    RichRenderer::$timestamp = $date_format;
+    TextRenderer::$timestamp = $date_format;
+  }
+}

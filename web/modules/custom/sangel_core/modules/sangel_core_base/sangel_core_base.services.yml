@@ -1,0 +1,8 @@
+services:
+  sangel_core.export_log_manager:
+    class: Drupal\sangel_core_base\Service\ExportLogManager
+    arguments:
+      - '@entity_type.manager'
+      - '@file.repository'
+      - '@file_system'
+      - '@logger.factory'

@@ -1,0 +1,16 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - menu_ui
+name: Catalog
+type: catalog
+description: 'Grouping of products for a specific client type or custom need.'
+help: null
+new_revision: true
+preview_mode: 1
+display_submitted: true
+third_party_settings:
+  menu_ui:
+    available_menus: {  }
+    parent: ''

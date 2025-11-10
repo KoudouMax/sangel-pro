@@ -1,0 +1,11 @@
+view all sangel catalogs:
+  title: 'View any catalog'
+  description: 'Allows users to view all catalogs regardless of assignment.'
+
+export sangel catalogs:
+  title: 'Export catalog product lists'
+  description: 'Allows users to download a catalog as CSV.'
+
+import sangel catalogs:
+  title: 'Import client catalogs'
+  description: 'Allows users to upload CSV feeds for client catalogs.'
